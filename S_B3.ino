@@ -243,13 +243,13 @@ void AtanTrack3() {
     if (analogRead(SenL) > Sen_Left) {
       looptime = millis();
       while (millis() - looptime <= 150) {
-        heading(100, 35, 0);
+        holonomic(100, 35, 0);
       }
       wheel(0, 0, 0);
     } else if (analogRead(SenR) > Sen_Right) {
       looptime = millis();
       while (millis() - looptime <= 150) {
-        heading(100, 145, 0);
+        holonomic(100, 145, 0);
       }
       wheel(0, 0, 0);
     } else {
@@ -277,7 +277,7 @@ void AtanTrack3() {
       lastYaw = pvYaw;
       if (abs(pvYaw) <= 5 || ballInGoalArea) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
         if (abs(Xaxis_Error) <= 15) {
-          bump();
+          dribblingtothegoal();
           // wheel(0, 0, 0);
           // SetYaw();
           // getIMU();

@@ -35,7 +35,7 @@ int discoveState = 1;
 float head_error, head_pError, head_w, head_d, head_i;
 /* >> ball shooting <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #define limPin A0
-#define reloadSpd 60
+#define reloadSpd 70
 //////////////////////////////////
 #define SenF A1
 #define SenL A2
@@ -120,7 +120,7 @@ void MENU() {
     }
   } else if (x == 3) {
     while (1) {
-      TrackXaxis2();
+      dribblingtothegoal();
     }
   } else if (x == 4) {
     while (1) {
@@ -255,17 +255,17 @@ int timer = 0;
 void reload() {
   motor(4, reloadSpd);
   timer = 0;
-  for (int i = 0; i < 2000; i++) {
+  for (int i = 0; i < 2500; i++) {
     timer++;
     if (analogRead(limPin) > 1000) break;
     delay(1);
   }
-  if (timer == 2000) {     // ถ้าก้านยิงติด
+  if (timer == 2500) {     // ถ้าก้านยิงติด
     motor(4, -reloadSpd);  // เลื่อนก้านยิงไปข้างหน้า
     delay(500);            //ก่อน 0.5 วินาที
     motor(4, reloadSpd);
     timer = 0;
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 2500; i++) {
       timer++;
       if ((analogRead(limPin) > 1000)) break;
       delay(1);
@@ -323,6 +323,8 @@ void setup() {
 
 void loop() {
   MENU();
+  // oled.text(4, 0, "lim=%d     ", analog(0));
+    // oled.show();
   // AtanTrack3();
   // waitSW_OK_bmp();
   // bump();

@@ -1,3 +1,11 @@
+void D_B() {
+  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+    dribblingtothegoal();
+  } else {
+    backtogoal();
+  }
+}
+
 void dribblingtothegoal() {
   while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     getIMU();
@@ -24,6 +32,7 @@ void dribblingtothegoal() {
         }
 
         shoot();
+        wheel(0, 0, 0);
         unsigned long t = millis();
         while (millis() - t < 600) holonomic(100, 270, 0);
         wheel(0, 0, 0);
@@ -86,10 +95,8 @@ void dribblingtothegoal() {
       } else {
         speed = 80;
       }
-
       heading(speed, theta, 0);
     }
   }
-
   wheel(0, 0, 0);
 }
