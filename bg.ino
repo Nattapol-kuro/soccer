@@ -10,8 +10,16 @@ void backtogoal() {
   int stateTurn = 0;
   oled.clear();
   while (!(huskylens.updateBlocks() && huskylens.blockSize[1])) {
-    if () {
-
+    if (state == 0) {
+      looptimer = millis();
+      while (millis() - looptimer <= 500) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+          break;
+        }
+        heading(100, 270, 0);
+      }
+      wheel(0, 0, 0);
+      state = 1;
     } else if (state == 1) {
       if (ballPosX < 160) {
         vecCurve = -135;

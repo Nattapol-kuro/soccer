@@ -85,7 +85,7 @@ int menu() {
     oled.clear();
     oled.text(0, NUMBER_KNOB, "======MEUN======", x);
     oled.text(2, 0, "CASE = %d", x);
-    if (x == 1) oled.text(4, 0, ">Read", x);
+    if (x == 1) oled.text(4, 0, ">chksens", x);
     if (x == 2) oled.text(4, 0, ">CoordsBall", x);
     if (x == 3) oled.text(4, 0, ">TrackXaxis2", x);
     if (x == 4) oled.text(4, 0, ">S_B3", x);
@@ -112,7 +112,7 @@ void MENU() {
   int x = menu();
   if (x == 1) {
     while (1) {
-      Read();
+      chksens();
     }
   } else if (x == 2) {
     while (1) {
@@ -126,7 +126,7 @@ void MENU() {
     while (1) {
       S_B3();
     }
-  } 
+  }
 }
 
 float thetaRad, vx, vy, spd1, spd2, spd3;
