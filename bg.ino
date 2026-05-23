@@ -159,7 +159,11 @@ void backtogoal() {
           heading(100, 0, 0);
         }
         wheel(0, 0, 0);
+<<<<<<< Updated upstream
         while (analogRead(A2) < Sen_Left && analogRead(A3)) {
+=======
+        while (analogRead(A2) < Sen_Left && analogRead(A3) < Sen_Right  ) {
+>>>>>>> Stashed changes
           if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
             break;
           }

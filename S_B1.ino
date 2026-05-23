@@ -126,7 +126,6 @@ void AtanTrack2() {
       else if (SethaPos < 80) SethaPos = 0;
     }
 
-    // ถ้าบอลอยู่ตรงหน้าพอ → dip()
     if (abs(ballPosX - 160) < 20 && Yaxis_Error < 5) dip();
 
     holonomic(Yaxis_spd, SethaPos, rot_w);
