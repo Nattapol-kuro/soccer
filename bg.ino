@@ -159,26 +159,24 @@ void backtogoal() {
           heading(100, 0, 0);
         }
         wheel(0, 0, 0);
-<<<<<<< Updated upstream
-        while (analogRead(A2) < Sen_Left && analogRead(A3)) {
-=======
-        while (analogRead(A2) < Sen_Left && analogRead(A3) < Sen_Right  ) {
->>>>>>> Stashed changes
-          if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-            break;
+        while (analogRead(A2) < Sen_Left && analogRead(A3 < Sen_Right)) {
+          while (analogRead(A2) < Sen_Left && analogRead(A3) < Sen_Right) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+              break;
+            }
+            heading(100, 270, 0);
           }
-          heading(100, 270, 0);
-        }
-        wheel(0, 0, 0);
-        looptimer = millis();
-        while (millis() - looptimer <= 200) {
-          if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-            break;
+          wheel(0, 0, 0);
+          looptimer = millis();
+          while (millis() - looptimer <= 200) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+              break;
+            }
+            heading(100, 90, 0);
           }
-          heading(100, 90, 0);
+          wheel(0, 0, 0);
+          state = 5;
         }
-        wheel(0, 0, 0);
-        state = 5;
       } else {
         looptimer = millis();
         while (millis() - looptimer <= 500) {
@@ -196,7 +194,7 @@ void backtogoal() {
           heading(100, 180, 0);
         }
         wheel(0, 0, 0);
-        while (analogRead(A2) < Sen_Left && analogRead(A3)) {
+        while (analogRead(A2) < Sen_Left && analogRead(A3) < Sen_Right) {
           if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
             break;
           }

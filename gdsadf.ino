@@ -1,4 +1,4 @@
-void dribbling() {
+void dribblingtothegoal() {
   while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     getIMU();
 
@@ -17,7 +17,7 @@ void dribbling() {
       bool ballInGoalY = (ballY > goal.y) && (ballY > 220) && (goal.h > 60);
 
       // ======= Phase 1: ยิง =======
-      if (ballInGoalX && ballInGoalY || analogRead(A1) > SenCRef) {
+      if (ballInGoalX && ballInGoalY || analogRead(A1) > Sen_Front) {
         if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) {
           wheel(0, 0, 0);
           return;
