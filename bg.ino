@@ -159,7 +159,7 @@ void backtogoal() {
           heading(100, 0, 0);
         }
         wheel(0, 0, 0);
-        while (analogRead(A2) < Sen_Left && analogRead(A3)) {
+        while (analogRead(A2) < Sen_Left && analogRead(A3) < Sen_Right) {
           if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
             break;
           }
@@ -192,7 +192,7 @@ void backtogoal() {
           heading(100, 180, 0);
         }
         wheel(0, 0, 0);
-        while (analogRead(A2) < Sen_Left && analogRead(A3)) {
+        while (analogRead(A2) < Sen_Left && analogRead(A3)  < Sen_Right) {
           if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
             break;
           }
