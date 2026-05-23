@@ -1,14 +1,27 @@
 void TrackXaxis() {
-  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
-    Xaxis_D = Xaxis_Error - Xaxis_PvEror;
-    Xaxis_spd = (Xaxis_Error * Xaxis_Kp) + (Xaxis_D * Xaxis_Kd);
-    if (abs(Xaxis_spd) < 25 && abs(Xaxis_Error) > 6) {
-      Xaxis_spd = (Xaxis_spd > 0) ? 25 : -25;
-    } else Xaxis_spd = constrain(Xaxis_spd, -80, 80);
-    Xaxis_PvEror = Xaxis_Error;
-    heading(Xaxis_spd, 0, 0);
+  if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
+
+  Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
+  Xaxis_D = Xaxis_Error - Xaxis_PvEror;
+
+  // I term — reset ถ้า error ข้ามศูนย์ ป้องกัน windup
+  if ((Xaxis_Error > 0) != (Xaxis_PvEror > 0)) Xaxis_I = 0;
+  else Xaxis_I += Xaxis_Error;
+  Xaxis_I = constrain(Xaxis_I, -200, 200);
+
+  Xaxis_spd = (Xaxis_Error * 0.6) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.8);
+
+  if (abs(Xaxis_Error) < 12) {
+    Xaxis_spd = 0;  // deadzone
+  } else if (abs(Xaxis_spd) < 12 && abs(Xaxis_Error) > 12) {
+    Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;  // min speed
+  } else {
+    Xaxis_spd = constrain(Xaxis_spd, -80, 80);
   }
+
+  Xaxis_PvEror = Xaxis_Error;
+  lastError = Xaxis_Error;
+  holonomic(Xaxis_spd, 0, 0);
 }
 
 void Atantrak_dibbling() {
@@ -214,9 +227,7 @@ void TrackXaxis2() {
   else Xaxis_I += Xaxis_Error;
   Xaxis_I = constrain(Xaxis_I, -200, 200);
 
-  Xaxis_spd = (Xaxis_Error * 0.6)
-              + (Xaxis_I * Xaxis_Ki)
-              + (Xaxis_D * 0.8);
+  Xaxis_spd = (Xaxis_Error * 0.6) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.8);
 
   if (abs(Xaxis_Error) < 12) {
     Xaxis_spd = 0;  // deadzone
