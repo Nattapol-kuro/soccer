@@ -1,3 +1,11 @@
+void S_B1() {
+  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+    AtanTrack1();
+  } else {
+    backtogoal();
+  }
+}
+
 bool firstbump = 1;
 
 void AtanTrack1() {

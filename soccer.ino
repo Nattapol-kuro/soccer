@@ -454,22 +454,6 @@ void CoordsBall() {
   }
 }
 
-void S_B3() {
-  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    AtanTrack3();
-  } else {
-    backtogoal();
-  }
-}
-
-void S_B1() {
-  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    AtanTrack1();
-  } else {
-    backtogoal();
-  }
-}
-
 MergedGoal getMergedGoalAll() {
   MergedGoal g = { 0, 0, 0, 0, false };
   float minX = 320, maxX = 0, minY = 240, maxY = 0;

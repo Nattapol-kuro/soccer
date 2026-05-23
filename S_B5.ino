@@ -1,3 +1,11 @@
+void S_B5() {
+  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+    AtanTrack5();
+  } else {
+    backtogoal();
+  }
+}
+
 void AtanTrack5() {
   if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
 

@@ -1,3 +1,11 @@
+void S_B3() {
+  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+    AtanTrack3();
+  } else {
+    backtogoal();
+  }
+}
+
 void TrackXaxis() {
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
@@ -175,31 +183,6 @@ void dribbling() {
   wheel(0, 0, 0);
 }
 
-// void TrackXaxis2() {
-//   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-//     Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
-//     Xaxis_I += Xaxis_Error;
-//     Xaxis_D = Xaxis_Error - Xaxis_PvEror;
-//     if (abs(Xaxis_Error - lastError) < 2) {
-//       if (errorStarttime == 0) errorStarttime = millis();
-//       else errorStarttime = 0;
-//     }
-//     Xaxis_spd = (Xaxis_Error * 0.95) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.55);
-//     if (abs(Xaxis_spd) < 10 && abs(Xaxis_Error) >= 15) {
-//       Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;
-//     } else {
-//       if (errorStarttime > 0 && millis() - errorStarttime > 300) {
-//         Xaxis_spd *= 1;
-//         if (Xaxis_spd <= 10) Xaxis_spd = 20;
-//       }
-//       Xaxis_spd = constrain(Xaxis_spd, -60, 60);
-//     }
-//     Xaxis_PvEror = Xaxis_Error;
-//     lastError = Xaxis_Error;
-//     heading(Xaxis_spd, 0, 0);
-//   }
-// }
-
 int lastError = 0;
 long errorStarttime = 0;
 
@@ -256,7 +239,22 @@ void AtanTrack3() {
     Yaxis_PvEror = Yaxis_Error;
 
     getIMU();
-    heading(Yaxis_spd, SethaPos, 0);
+    long looptime = millis();
+    if (analogRead(SenL) > Sen_Left) {
+      looptime = millis();
+      while (millis() - looptime <= 150) {
+        heading(100, 35, 0);
+      }
+      wheel(0, 0, 0);
+    } else if (analogRead(SenR) > Sen_Right) {
+      looptime = millis();
+      while (millis() - looptime <= 150) {
+        heading(100, 145, 0);
+      }
+      wheel(0, 0, 0);
+    } else {
+      heading(Yaxis_spd, SethaPos, 0);
+    }
 
     float goalEstX, goalEstY, goalEstWidth;
     if (huskylens.blockSize[2]) {
@@ -313,7 +311,23 @@ void AtanTrack3() {
           Yaxis_spd = constrain(Yaxis_spd, -100, 100);
           Yaxis_PvEror = Yaxis_Error;
 
-          if (Yaxis_Error > 5) holonomic(Yaxis_spd, 90, rot_w);
+          if (Yaxis_Error > 5) {
+            if (analogRead(SenL) > Sen_Left) {
+              looptime = millis();
+              while (millis() - looptime <= 150) {
+                heading(100, 35, 0);
+              }
+              wheel(0, 0, 0);
+            } else if (analogRead(SenR) > Sen_Right) {
+              looptime = millis();
+              while (millis() - looptime <= 150) {
+                heading(100, 145, 0);
+              }
+              wheel(0, 0, 0);
+            } else {
+              holonomic(Yaxis_spd, 90, rot_w);
+            }
+          }
           if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
 
           // int targetSpeed = (abs(pvYaw) > 50) ? 90 : 70;
@@ -410,7 +424,7 @@ void AtanTrack4() {
     }
     if (abs(ballPosX - 160) < 20 && Yaxis_Error < 5) {
       // beep();
-      dip();
+      dribblingtothegoal();
       // bump();
     }
     // if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
