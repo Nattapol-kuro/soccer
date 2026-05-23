@@ -239,22 +239,22 @@ void AtanTrack3() {
     Yaxis_PvEror = Yaxis_Error;
 
     getIMU();
-    long looptime = millis();
-    if (analogRead(SenL) > Sen_Left) {
-      looptime = millis();
-      while (millis() - looptime <= 150) {
-        holonomic(100, 35, 0);
-      }
-      wheel(0, 0, 0);
-    } else if (analogRead(SenR) > Sen_Right) {
-      looptime = millis();
-      while (millis() - looptime <= 150) {
-        holonomic(100, 145, 0);
-      }
-      wheel(0, 0, 0);
-    } else {
+    // long looptime = millis();
+    // if (analogRead(SenL) > Sen_Left) {
+    //   looptime = millis();
+    //   while (millis() - looptime <= 150) {
+    //     holonomic(100, 35, 0);
+    //   }
+    //   wheel(0, 0, 0);
+    // } else if (analogRead(SenR) > Sen_Right) {
+    //   looptime = millis();
+    //   while (millis() - looptime <= 150) {
+    //     holonomic(100, 145, 0);
+    //   }
+    //   wheel(0, 0, 0);
+    // } else {
       heading(Yaxis_spd, SethaPos, 0);
-    }
+    // }
 
     float goalEstX, goalEstY, goalEstWidth;
     if (huskylens.blockSize[2]) {
@@ -312,21 +312,21 @@ void AtanTrack3() {
           Yaxis_PvEror = Yaxis_Error;
 
           if (Yaxis_Error > 5) {
-            if (analogRead(SenL) > Sen_Left) {
-              looptime = millis();
-              while (millis() - looptime <= 150) {
-                heading(100, 35, 0);
-              }
-              wheel(0, 0, 0);
-            } else if (analogRead(SenR) > Sen_Right) {
-              looptime = millis();
-              while (millis() - looptime <= 150) {
-                heading(100, 145, 0);
-              }
-              wheel(0, 0, 0);
-            } else {
+            // if (analogRead(SenL) > Sen_Left) {
+            //   looptime = millis();
+            //   while (millis() - looptime <= 150) {
+            //     heading(100, 35, 0);
+            //   }
+            //   wheel(0, 0, 0);
+            // } else if (analogRead(SenR) > Sen_Right) {
+            //   looptime = millis();
+            //   while (millis() - looptime <= 150) {
+            //     heading(100, 145, 0);
+            //   }
+            //   wheel(0, 0, 0);
+            // } else {
               holonomic(Yaxis_spd, 90, rot_w);
-            }
+            // }
           }
           if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
 
