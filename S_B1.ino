@@ -1,5 +1,13 @@
 bool firstbump = 1;
 
+void S_B1() {
+  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+    AtanTrack1();
+  } else {
+    backtogoal();
+  }
+}
+
 void AtanTrack1() {
   if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
     ballPosX = huskylens.blockInfo[1][0].x;

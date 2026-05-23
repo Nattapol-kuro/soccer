@@ -1,3 +1,14 @@
+int lastError = 0;
+long errorStarttime = 0;
+
+void S_B3() {
+  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+    AtanTrack3();
+  } else {
+    backtogoal();
+  }
+}
+
 void TrackXaxis() {
   if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
 
@@ -213,8 +224,7 @@ void dribbling() {
 //   }
 // }
 
-int lastError = 0;
-long errorStarttime = 0;
+
 
 void TrackXaxis2() {
   if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
