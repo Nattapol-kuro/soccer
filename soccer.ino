@@ -87,7 +87,7 @@ int menu() {
     oled.text(2, 0, "CASE = %d", x);
     if (x == 1) oled.text(4, 0, ">chksens", x);
     if (x == 2) oled.text(4, 0, ">CoordsBall", x);
-    if (x == 3) oled.text(4, 0, ">TrackXaxis2", x);
+    if (x == 3) oled.text(4, 0, ">D_B", x);
     if (x == 4) oled.text(4, 0, ">S_B3", x);
 
     oled.text(6, 5, "PRESS_SW_OK", x);
@@ -120,7 +120,7 @@ void MENU() {
     }
   } else if (x == 3) {
     while (1) {
-      dribblingtothegoal();
+      D_B();
     }
   } else if (x == 4) {
     while (1) {

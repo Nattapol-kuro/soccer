@@ -168,7 +168,7 @@ void backtogoal() {
           }
           wheel(0, 0, 0);
           looptimer = millis();
-          while (millis() - looptimer <= 200) {
+          while (millis() - looptimer <= 400) {
             if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
               break;
             }
@@ -202,7 +202,7 @@ void backtogoal() {
         }
         wheel(0, 0, 0);
         looptimer = millis();
-        while (millis() - looptimer <= 200) {
+        while (millis() - looptimer <= 400) {
           if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
             break;
           }

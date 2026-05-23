@@ -6,7 +6,10 @@ void D_B() {
   }
 }
 
+int bypass = 0;
 void dribblingtothegoal() {
+  count = 2;
+  long looptime = millis();
   while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     getIMU();
 
@@ -58,8 +61,26 @@ void dribblingtothegoal() {
         // goalYaw = 0;
         speed = 70;
       }
-
-      holonomic(speed, theta, rot_w);
+      if (bypass < count) {
+        looptime = millis();
+        if (analogRead(SenL) > Sen_Left) {
+          looptime = millis();
+          while (millis() - looptime <= 150) {
+            bypass++;
+            holonomic(100, 35, 0);
+          }
+          wheel(0, 0, 0);
+        } else if (analogRead(SenR) > Sen_Right) {
+          looptime = millis();
+          while (millis() - looptime <= 150) {
+            bypass++;
+            holonomic(100, 145, 0);
+          }
+          wheel(0, 0, 0);
+        } else {
+          holonomic(speed, theta, rot_w);
+        }
+      }
       // return;
     }
 
@@ -78,8 +99,26 @@ void dribblingtothegoal() {
       // Serial.println(rot_w);
       //   // Serial.print(" | goal.w: ");
       //   // Serial.println(goal.w);
-
-      holonomic(speed, theta, rot_w);
+      if (bypass < count) {
+        looptime = millis();
+        if (analogRead(SenL) > Sen_Left) {
+          looptime = millis();
+          while (millis() - looptime <= 150) {
+            bypass++;
+            holonomic(100, 35, 0);
+          }
+          wheel(0, 0, 0);
+        } else if (analogRead(SenR) > Sen_Right) {
+          looptime = millis();
+          while (millis() - looptime <= 150) {
+            bypass++;
+            holonomic(100, 145, 0);
+          }
+          wheel(0, 0, 0);
+        } else {
+          holonomic(speed, theta, rot_w);
+        }
+      }
       continue;
     }
 
@@ -95,7 +134,26 @@ void dribblingtothegoal() {
       } else {
         speed = 80;
       }
-      heading(speed, theta, 0);
+      if (bypass < count) {
+        looptime = millis();
+        if (analogRead(SenL) > Sen_Left) {
+          looptime = millis();
+          while (millis() - looptime <= 150) {
+            bypass++;
+            holonomic(100, 35, 0);
+          }
+          wheel(0, 0, 0);
+        } else if (analogRead(SenR) > Sen_Right) {
+          looptime = millis();
+          while (millis() - looptime <= 150) {
+            bypass++;
+            holonomic(100, 145, 0);
+          }
+          wheel(0, 0, 0);
+        } else {
+          heading(speed, theta, 0);
+        }
+      }
     }
   }
   wheel(0, 0, 0);
