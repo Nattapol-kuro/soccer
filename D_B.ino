@@ -2,9 +2,6 @@
 void D_B() {
   int FoundLeft = 0, FoundRight = 0, FoundCent = 0;
     if (huskylens.updateBlocks() && huskylens.blockSize[1]) {  // ball found
-      // lastYaw = pvYaw;
-
-
       if (count >= 2) bypassLR = 1;
       if (countC >= 2) bypassC = 1;
 
@@ -34,7 +31,7 @@ void D_B() {
         holonomic(80, 160, 0);
         delay(100);
       } else {
-        AtanTrack4();
+        AtanTrack3();
       }
     }else {
       bypassLR = 0;

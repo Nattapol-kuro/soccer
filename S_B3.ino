@@ -289,7 +289,7 @@ void AtanTrack3() {
         } else {
           TrackXaxis2();
         }
-      } else if ((abs(pvYaw) > 10) && (huskylens.updateBlocks() && huskylens.blockSize[1])) {
+      } /*else if ((abs(pvYaw) > 10) && (huskylens.updateBlocks() && huskylens.blockSize[1])) {
         // if (huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3]) bypassYaw = 1;
         while ((huskylens.updateBlocks() && huskylens.blockSize[1]) && Yaxis_Error <= 20) {
           getIMU();
@@ -328,23 +328,8 @@ void AtanTrack3() {
               holonomic(Yaxis_spd, 90, rot_w);
             // }
           }
-          if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
-
-          // int targetSpeed = (abs(pvYaw) > 50) ? 90 : 70;
-          // int currentSpeed = 0.8 * currentSpeed + 0.2 * targetSpeed;  // smoothing speed
-          // if (pvYaw < 0) {
-          //   vecCurve = 0;
-          // } else {
-          //   vecCurve = 180;
-          // }
-          // holonomic(currentSpeed, vecCurve, rot_w);
-          // if (Yaxis_Error > 5) heading(Yaxis_spd, 90, rot);
-          // if (abs(pvYaw) <= 10) {
-          //   // bypassYaw = 1;
-          //   break;
-          // }
         }
-      }
+      }*/
     }
   }
 }
