@@ -582,12 +582,158 @@
 //     state = 1;
 //   }
 // }
+bool front = 0;
+bool right = 0;
+bool left = 0;
+
+void chksen() {
+  front = (analogRead(A1) > Sen_Front) ? 1 : 0;
+  left = (analogRead(A2) > Sen_Left) ? 1 : 0;
+  right = (analogRead(A3) > Sen_Right) ? 1 : 0;
+}
+
+void gg() {
+  int state = 0;
+  // int vecCurve = 0;
+  int   vecCurve = (ballPosX < 160) ? -135 : -45;
+  int count = 0;
+  long looptimer;
+
+  oled.clear();
+
+  while (1) {
+
+    // ====== เห็นบอล → ออกจาก backtogoal ======
+    if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+      looptimer = millis();
+      while (millis() - looptimer <= 200) {
+        AtanTrack3();
+      }
+      break;
+    }
+
+    // ====== STATE 0: ถอยหลัง 500ms ======
+    if (state == 0) {
+      looptimer = millis();
+      while (millis() - looptimer <= 600) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        chksen();
+        heading(100, 270, 0);
+        if (left && right) {
+          looptimer = millis();
+          while (millis() - looptimer <= 500) {
+            heading(100, 90, 0);
+          }
+          wheel(0, 0, 0);
+          state = 1;
+        }
+      }
+
+      wheel(0, 0, 0);
+      
+      state = 1;
+
+      // ====== STATE 1: วิ่งเฉียงหาเส้น ======
+    } else if (state == 1) {
+
+      heading(100, vecCurve, 0);
+
+      if (analogRead(A2) > Sen_Left) {
+        looptimer = millis();
+        while (millis() - looptimer <= 60) {
+          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+          if (analogRead(A3) > Sen_Right) {
+            wheel(0, 0, 0);
+            right = 1;
+            break;
+          }
+          heading(30, vecCurve, 0);
+        }
+        wheel(0, 0, 0);
+        left = 1;
+
+      } else if (analogRead(A3) > Sen_Right) {
+        looptimer = millis();
+        while (millis() - looptimer <= 60) {
+          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+          if (analogRead(A2) > Sen_Left) {
+            wheel(0, 0, 0);
+            left = 1;
+            break;
+          }
+          heading(30, vecCurve, 0);
+        }
+        wheel(0, 0, 0);
+        right = 1;
+      }
+      if (left && right) {
+        looptimer = millis();
+        while (millis() - looptimer <= 500) {
+          heading(100, 90, 0);
+        }
+        wheel(0, 0, 0);
+        state = 2;
+      } else if (right) {
+        vecCurve = -135;
+        heading(100, vecCurve, 0);
+      } else if (left) {
+        vecCurve = -45;
+        heading(100, vecCurve, 0);
+      }
+    } else if (state == 2) {
+      vecCurve = (vecCurve == -45) ? 170 : 10;
+      heading(100, vecCurve, 0);
+      looptimer = millis();
+      while (millis() - looptimer <= 400) {
+        heading(100, vecCurve, 0);
+        if (analogRead(A2) > Sen_Left) {
+          looptimer = millis();
+          while (millis() - looptimer <= 40) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+            if (analogRead(A3) > Sen_Right) {
+              wheel(0, 0, 0);
+              right = 1;
+              break;
+            }
+            heading(30, vecCurve, 0);
+          }
+          wheel(0, 0, 0);
+          left = 1;
+
+        } else if (analogRead(A3) > Sen_Right) {
+          looptimer = millis();
+          while (millis() - looptimer <= 40) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+            if (analogRead(A2) > Sen_Left) {
+              wheel(0, 0, 0);
+              left = 1;
+              break;
+            }
+            heading(30, vecCurve, 0);
+          }
+          wheel(0, 0, 0);
+          right = 1;
+        }
+        if (left && right){
+          break;
+        }
+        else if (left) {
+          looptimer = millis();
+          vecCurve = 10;
+        } else if (right) {
+          looptimer = millis();
+          vecCurve = 170;
+        }
+      }
+      state = 0;
+      wheel(0, 0, 0);
+      beep();
+    }
+  }
+}
 
 void backtogoal() {
   int state = 0;
-  bool front = 0;
-  bool right = 0;
-  bool left = 0;
   int vecCurve = 0;
   int count = 0;
   long looptimer;
@@ -615,7 +761,7 @@ void backtogoal() {
       wheel(0, 0, 0);
       state = 1;
 
-    // ====== STATE 1: วิ่งเฉียงหาเส้น ======
+      // ====== STATE 1: วิ่งเฉียงหาเส้น ======
     } else if (state == 1) {
       vecCurve = (ballPosX < 160) ? -135 : -45;
       heading(100, vecCurve, 0);
@@ -649,28 +795,20 @@ void backtogoal() {
         right = 1;
       }
 
-      if (left && right)    state = 5;
-      else if (left || right) state = 2;
+      if (left && right) {
+        state = 5;
+      } else if (left || right) {
+        state = 2;
+      }
 
-    // ====== STATE 2: วิ่งตามเส้นหาอีกข้าง ======
+      // ====== STATE 2: วิ่งตามเส้นหาอีกข้าง ======
     } else if (state == 2) {
       looptimer = millis();
       while (millis() - looptimer <= 500) {
+        chksen();
         if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-
-        if (analogRead(A2) > Sen_Left && analogRead(A3) > Sen_Right) {
-          left = 1; right = 1;
-          wheel(0, 0, 0);
-          state = 4;
-          break;
-        }
-        if (right == 1 && analogRead(A2) > Sen_Left) {
+        if (left == 1 && right == 1) {
           left = 1;
-          wheel(0, 0, 0);
-          state = 4;
-          break;
-        }
-        if (left == 1 && analogRead(A3) > Sen_Right) {
           right = 1;
           wheel(0, 0, 0);
           state = 4;
@@ -682,32 +820,30 @@ void backtogoal() {
       wheel(0, 0, 0);
 
       // fallback ถ้า timeout
-      if (state == 2) {
-        looptimer = millis();
-        int fallbackDir = (ballPosX < 160) ? 0 : 180;
-        while (millis() - looptimer <= 600) {
-          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-          heading(100, fallbackDir, 0);
-        }
-        wheel(0, 0, 0);
-
-        // ถอยหาเส้นทั้งสอง
-        while (!(analogRead(A2) > Sen_Left && analogRead(A3) > Sen_Right)) {
-          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-          heading(100, 270, 0);
-        }
-        wheel(0, 0, 0);
-
-        looptimer = millis();
-        while (millis() - looptimer <= 300) {
-          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-          heading(100, 90, 0);
-        }
-        wheel(0, 0, 0);
-        state = 5;
+      looptimer = millis();
+      int fallbackDir = (ballPosX < 160) ? 0 : 180;
+      while (millis() - looptimer <= 600) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        heading(100, fallbackDir, 0);
       }
+      wheel(0, 0, 0);
 
-    // ====== STATE 4: จัดหุ่นกลับเข้าสนาม ======
+      // ถอยหาเส้นทั้งสอง
+      while (!(analogRead(A2) > Sen_Left && analogRead(A3) > Sen_Right)) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        heading(100, 270, 0);
+      }
+      wheel(0, 0, 0);
+
+      looptimer = millis();
+      while (millis() - looptimer <= 300) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        heading(100, 90, 0);
+      }
+      wheel(0, 0, 0);
+      state = 5;
+
+      // ====== STATE 4: จัดหุ่นกลับเข้าสนาม ======
     } else if (state == 4) {
       int turnDir = (ballPosX < 160) ? 0 : 180;
 
@@ -743,7 +879,7 @@ void backtogoal() {
       wheel(0, 0, 0);
       state = 5;
 
-    // ====== STATE 5: ส่ายหน้าซ้ายขวาหาบอล ======
+      // ====== STATE 5: ส่ายหน้าซ้ายขวาหาบอล ======
     } else if (state == 5) {
       int dirs[4] = { 30, -30, -30, 30 };
       bool seeBall = false;
@@ -764,7 +900,7 @@ void backtogoal() {
 
       state = seeBall ? 0 : 6;
 
-    // ====== STATE 6: วิ่งซ้ายขวาหาบอล ======
+      // ====== STATE 6: วิ่งซ้ายขวาหาบอล ======
     } else if (state == 6) {
       int dirs[4] = { 180, 0, 0, 180 };
       bool seeBall = false;
@@ -783,11 +919,11 @@ void backtogoal() {
         }
       }
 
-      // ถ้ายังไม่เจอ → กลับ state 1 แล้วหาใหม่
+      // ถ้ายังไม่เจอ → กลับ state 2 แล้วหาใหม่
       if (!seeBall) {
         left = 0;
         right = 0;
-        state = 4;
+        state = 2;
       }
     }
   }
