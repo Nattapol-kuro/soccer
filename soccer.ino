@@ -288,7 +288,7 @@ void setup() {
   delay(500);
   // reload();
   // reload();
-  // waitSW_OK_bmp();
+  waitSW_OK_bmp();
   // if (SW_A()) {
   //   shoot();
   //   delay(150);
@@ -322,7 +322,7 @@ void setup() {
 }
 
 void loop() {
-  MENU();
+  gg();
   // oled.text(4, 0, "lim=%d     ", analog(0));
   // oled.show();
   // AtanTrack3();
