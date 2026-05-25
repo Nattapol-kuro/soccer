@@ -140,7 +140,7 @@ void MENU() {
     }
   } else if (x == 4) {
     while (1) {
-      gg();
+      // gg();
     }
   }
 }
