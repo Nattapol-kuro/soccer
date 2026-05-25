@@ -98,7 +98,7 @@ int menu() {
     }
     if (SW_A()) {
       shoot();
-      reload();
+    reload();
     }
     if (SW_B()) {
       Auto_zero();
@@ -124,7 +124,7 @@ void MENU() {
     }
   } else if (x == 4) {
     while (1) {
-      S_B3();
+      gg();
     }
   }
 }
@@ -284,10 +284,9 @@ void setup() {
     delay(100);
   }
   delay(1000);
+  // reload();
   Auto_zero();
   delay(500);
-  // reload();
-  // reload();
   // waitSW_OK_bmp();
   // if (SW_A()) {
   //   shoot();
@@ -322,7 +321,7 @@ void setup() {
 }
 
 void loop() {
-  MENU();
+  // gg();
   // oled.text(4, 0, "lim=%d     ", analog(0));
   // oled.show();
   // AtanTrack3();
@@ -335,7 +334,7 @@ void loop() {
   //   heading(100, 90, 45);
   // }
   // wheel(0, 0, 0);
-  // MENU();
+  MENU();
   // Atantrak_dibbling();
   // AtanTrack3();
   // Bumping();
