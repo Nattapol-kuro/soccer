@@ -33,7 +33,7 @@ int discoveState = 1;
 #define head_Ki 0.0001f
 #define head_Kd 0.125f
 float head_error, head_pError, head_w, head_d, head_i;
-/* >> ball shooting <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+//////////////////////////////////
 #define limPin A0
 #define reloadSpd 70
 //////////////////////////////////
@@ -43,7 +43,7 @@ float head_error, head_pError, head_w, head_d, head_i;
 #define Sen_Front (3333 + 452) / 2
 #define Sen_Left (3969 + 1015) / 2
 #define Sen_Right (3956 + 500) / 2
-/////////////////////////////////
+//////////////////////////////////
 // #define Xaxis_Kp 1.2
 // #define Xaxis_Ki 0.005
 // #define Xaxis_Kd 0.12
@@ -78,13 +78,23 @@ float estimatedX = 0.0f;
 float estimatedY = 0.0f;
 
 int menu() {
+  int NUMBER_KNOB = 4;
+  int lastX = -1;
+
   while (1) {
-    int NUMBER_KNOB = 4;
+
     int x = knob(1, NUMBER_KNOB);
     x = constrain(x, 1, NUMBER_KNOB);
+
+    if (x != lastX) {
+      sound((x * 750), 50);
+      lastX = x;
+    }
+
     oled.clear();
-    oled.text(0, NUMBER_KNOB, "======MEUN======", x);
+    oled.text(0, NUMBER_KNOB, "    === MENU! ===    ", x);
     oled.text(2, 0, "CASE = %d", x);
+
     if (x == 1) oled.text(4, 0, ">chksens", x);
     if (x == 2) oled.text(4, 0, ">CoordsBall", x);
     if (x == 3) oled.text(4, 0, ">D_B", x);
@@ -92,17 +102,22 @@ int menu() {
 
     oled.text(6, 5, "PRESS_SW_OK", x);
     oled.show();
+
     if (SW_OK()) {
+      sound(3000, 200);
       oled.clear();
       return x;
     }
+
     if (SW_A()) {
       shoot();
-    reload();
+      reload();
     }
+
     if (SW_B()) {
       Auto_zero();
     }
+
     delay(100);
   }
 }
@@ -110,6 +125,7 @@ int x = 1;
 
 void MENU() {
   int x = menu();
+
   if (x == 1) {
     while (1) {
       chksens();
@@ -194,7 +210,7 @@ void Auto_zero() {
   }
   oled.clear();
   oled.show();
-  sound(3000, 100);
+  sound(2000, 100);
 }
 
 void wheel(int s1, int s2, int s3) {
@@ -284,7 +300,7 @@ void setup() {
     delay(100);
   }
   delay(1000);
-  // reload();
+  reload();
   Auto_zero();
   delay(500);
   // waitSW_OK_bmp();
@@ -304,7 +320,6 @@ void setup() {
   //   now = micros();
   //   updatePosition(60, 90, now - lastTime);
 
-
   //   Serial.print("X: ");
   //   Serial.print(estimatedX);
   //   Serial.print("  Y: ");
@@ -321,7 +336,6 @@ void setup() {
 }
 
 void loop() {
-  // gg();
   // oled.text(4, 0, "lim=%d     ", analog(0));
   // oled.show();
   // AtanTrack3();
