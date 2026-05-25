@@ -594,8 +594,8 @@ void chksen() {
 
 void gg() {
   int state = 0;
-  // int vecCurve = 0;
-  int   vecCurve = (ballPosX < 160) ? -135 : -45;
+  int vecCurve = 0;
+  // int vecCurve = (ballPosX < 160) ? -135 : -45;
   int count = 0;
   long looptimer;
 
@@ -625,17 +625,18 @@ void gg() {
             heading(100, 90, 0);
           }
           wheel(0, 0, 0);
-          state = 1;
+          state = 2;
         }
       }
 
       wheel(0, 0, 0);
-      
-      state = 1;
 
+       if (state == 0) {
+        vecCurve = (ballPosX < 160) ? -135 : -45;
+        state = 1;
+       }
       // ====== STATE 1: วิ่งเฉียงหาเส้น ======
     } else if (state == 1) {
-
       heading(100, vecCurve, 0);
 
       if (analogRead(A2) > Sen_Left) {
@@ -680,44 +681,46 @@ void gg() {
         vecCurve = -45;
         heading(100, vecCurve, 0);
       }
+
+      ///
     } else if (state == 2) {
-      vecCurve = (vecCurve == -45) ? 170 : 10;
+      vecCurve = (random(0,3) >= 2) ? 170 : 10;
       heading(100, vecCurve, 0);
       looptimer = millis();
       while (millis() - looptimer <= 400) {
         heading(100, vecCurve, 0);
-        if (analogRead(A2) > Sen_Left) {
-          looptimer = millis();
-          while (millis() - looptimer <= 40) {
-            if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-            if (analogRead(A3) > Sen_Right) {
-              wheel(0, 0, 0);
-              right = 1;
-              break;
-            }
-            heading(30, vecCurve, 0);
-          }
-          wheel(0, 0, 0);
-          left = 1;
+        chksen();
+        // if (analogRead(A2) > Sen_Left) {
+        //   looptimer = millis();
+        //   while (millis() - looptimer <= 40) {
+        //     if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        //     if (analogRead(A3) > Sen_Right) {
+        //       wheel(0, 0, 0);
+        //       right = 1;
+        //       break;
+        //     }
+        //     heading(30, vecCurve, 0);
+        //   }
+        //   wheel(0, 0, 0);
+        //   left = 1;
 
-        } else if (analogRead(A3) > Sen_Right) {
-          looptimer = millis();
-          while (millis() - looptimer <= 40) {
-            if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-            if (analogRead(A2) > Sen_Left) {
-              wheel(0, 0, 0);
-              left = 1;
-              break;
-            }
-            heading(30, vecCurve, 0);
-          }
-          wheel(0, 0, 0);
-          right = 1;
-        }
-        if (left && right){
+        // } else if (analogRead(A3) > Sen_Right) {
+        //   looptimer = millis();
+        //   while (millis() - looptimer <= 40) {
+        //     if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        //     if (analogRead(A2) > Sen_Left) {
+        //       wheel(0, 0, 0);
+        //       left = 1;
+        //       break;
+        //     }
+        //     heading(30, vecCurve, 0);
+        //   }
+        //   wheel(0, 0, 0);
+        //   right = 1;
+        // }
+        if (left && right) {
           break;
-        }
-        else if (left) {
+        } else if (left) {
           looptimer = millis();
           vecCurve = 10;
         } else if (right) {
@@ -725,9 +728,27 @@ void gg() {
           vecCurve = 170;
         }
       }
-      state = 0;
+      state = 3;
       wheel(0, 0, 0);
       beep();
+    } else if (state == 3) {
+      int dirs[4] = { 30, -30, -30, 30 };
+      bool seeBall = false;
+
+      for (int round = 0; round < 4 && !seeBall; round++) {
+        for (int i = 0; i < 4 && !seeBall; i++) {
+          looptimer = millis();
+          while (millis() - looptimer <= 300) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+              seeBall = true;
+              break;
+            }
+            holonomic(0, 0, dirs[i]);
+          }
+          wheel(0, 0, 0);
+        }
+      }
+      state = 0;
     }
   }
 }
