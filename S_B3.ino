@@ -2,7 +2,7 @@ void S_B3() {
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     AtanTrack3();
   } else {
-    backtogoal();
+    bbgg();
   }
 }
 
@@ -18,47 +18,6 @@ void S_B3() {
 //     heading(Xaxis_spd, 0, 0);
 //   }
 // }
-
-void Atantrak_dibbling() {
-  if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
-    ballPosX = huskylens.blockInfo[1][0].x;
-    ballPosY = huskylens.blockInfo[1][0].y;
-
-    float QuaDrantX = ballPosX - 160;
-    float QuaDrantY = 200 - ballPosY;
-    float Setha = atan2(QuaDrantY, QuaDrantX) * (180.0 / PI);
-    float SethaPos;
-    // if (Setha >= 0) SethaPos = Setha;
-    // else SethaPos = 180 + Setha;
-
-    Yaxis_Error = 210 - ballPosY;
-    Yaxis_D = Yaxis_Error - Yaxis_PvEror;
-    Yaxis_spd = (Yaxis_Error * Yaxis_Kp) + (Yaxis_D * Yaxis_Kd);
-    Yaxis_spd = constrain(Yaxis_spd, -30, 100);
-    Yaxis_PvEror = Yaxis_Error;
-    getIMU();
-    // Serial.print(" | X : ");
-    // Serial.print(QuaDrantX);
-    // Serial.print(" | Y : ");
-    // Serial.print(QuaDrantY);
-    // Serial.print(" | atan : ");
-    // Serial.print(Setha);
-    // Serial.print(" | Pos : ");
-    // Serial.println(SethaPos);
-    if (Yaxis_Error >= 40) {
-      holonomic(Yaxis_spd, Setha, 0);
-    } else {
-      heading(Yaxis_spd, Setha, 0);
-    }
-    if (abs(Yaxis_Error) <= 10) {
-      TrackXaxis();
-      if (abs(Xaxis_Error) <= 25) {
-        getIMU();
-        dribbling();
-      }
-    }
-  }
-}
 
 bool getGoalCenter(int &goalX) {
   float sumX = 0;
