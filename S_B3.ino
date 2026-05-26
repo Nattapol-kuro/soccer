@@ -6,18 +6,18 @@ void S_B3() {
   }
 }
 
-void TrackXaxis() {
-  if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
-    Xaxis_D = Xaxis_Error - Xaxis_PvEror;
-    Xaxis_spd = (Xaxis_Error * Xaxis_Kp) + (Xaxis_D * Xaxis_Kd);
-    if (abs(Xaxis_spd) < 25 && abs(Xaxis_Error) > 6) {
-      Xaxis_spd = (Xaxis_spd > 0) ? 25 : -25;
-    } else Xaxis_spd = constrain(Xaxis_spd, -80, 80);
-    Xaxis_PvEror = Xaxis_Error;
-    heading(Xaxis_spd, 0, 0);
-  }
-}
+// void TrackXaxis() {
+//   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+//     Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
+//     Xaxis_D = Xaxis_Error - Xaxis_PvEror;
+//     Xaxis_spd = (Xaxis_Error * Xaxis_Kp) + (Xaxis_D * Xaxis_Kd);
+//     if (abs(Xaxis_spd) < 25 && abs(Xaxis_Error) > 6) {
+//       Xaxis_spd = (Xaxis_spd > 0) ? 25 : -25;
+//     } else Xaxis_spd = constrain(Xaxis_spd, -80, 80);
+//     Xaxis_PvEror = Xaxis_Error;
+//     heading(Xaxis_spd, 0, 0);
+//   }
+// }
 
 void Atantrak_dibbling() {
   if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {

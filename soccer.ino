@@ -136,11 +136,11 @@ void MENU() {
     }
   } else if (x == 3) {
     while (1) {
-      D_B();
+      // D_B();
     }
   } else if (x == 4) {
     while (1) {
-      // gg();
+      S_B3();
     }
   }
 }
