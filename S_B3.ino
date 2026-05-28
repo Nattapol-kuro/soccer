@@ -52,25 +52,103 @@ bool getGoalCenter(int &goalX) {
 int lastError = 0;
 long errorStarttime = 0;
 
+// void TrackXaxis2() {
+//   if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
+
+//   Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
+//   Xaxis_D = Xaxis_Error - Xaxis_PvEror;
+
+//   // I term — reset ถ้า error ข้ามศูนย์ ป้องกัน windup
+//   if ((Xaxis_Error > 0) != (Xaxis_PvEror > 0)) Xaxis_I = 0;
+//   else Xaxis_I += Xaxis_Error;
+//   Xaxis_I = constrain(Xaxis_I, -200, 200);
+
+//   Xaxis_spd = (Xaxis_Error * 0.8)
+//               + (Xaxis_I * Xaxis_Ki)
+//               + (Xaxis_D * 1.0);
+
+//   if (abs(Xaxis_Error) < 5) {
+//     Xaxis_spd = 0;  // deadzone
+//   } else if (abs(Xaxis_spd) < 5 && abs(Xaxis_Error) > 5) {
+//     Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;  // min speed
+//   } else {
+//     Xaxis_spd = constrain(Xaxis_spd, -80, 80);
+//   }
+
+//   Xaxis_PvEror = Xaxis_Error;
+//   lastError = Xaxis_Error;
+//   heading(Xaxis_spd, 0, 0);
+// }
+
+// void TrackXaxis() {
+//   if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
+
+//   Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
+//   Xaxis_D = Xaxis_Error - Xaxis_PvEror;
+
+//   // I term — reset ถ้า error ข้ามศูนย์ ป้องกัน windup
+//   if ((Xaxis_Error > 0) != (Xaxis_PvEror > 0)) Xaxis_I = 0;
+//   else Xaxis_I += Xaxis_Error;
+//   Xaxis_I = constrain(Xaxis_I, -200, 200);
+
+//   Xaxis_spd = (Xaxis_Error * 0.6)
+//               + (Xaxis_I * Xaxis_Ki)
+//               + (Xaxis_D * 0.8);
+
+//   rot_error = 160 - huskylens.blockInfo[1][0].x;
+//   rot_d = rot_error - rot_pError;
+//   rot_pError = rot_error;
+//   rot_w = (rot_error * 0.45) + (rot_i * 0.05) + (rot_d * 0.8);
+//   rot_w = constrain(rot_w, -100, 100);
+
+//   if (abs(rot_error) <= 5) rot_w = 0;
+
+//   if (abs(Xaxis_Error) < 12) {
+//     Xaxis_spd = 0;  // deadzone
+//   } else if (abs(Xaxis_spd) < 12 && abs(Xaxis_Error) > 12) {
+//     Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;  // min speed
+//   } else {
+//     Xaxis_spd = constrain(Xaxis_spd, -80, 80);
+//   }
+
+//   Xaxis_PvEror = Xaxis_Error;
+//   lastError = Xaxis_Error;
+//   holonomic(Xaxis_spd, 0, rot_w);
+// }
+
 void TrackXaxis2() {
   if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) return;
 
   Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
   Xaxis_D = Xaxis_Error - Xaxis_PvEror;
 
-  // I term — reset ถ้า error ข้ามศูนย์ ป้องกัน windup
   if ((Xaxis_Error > 0) != (Xaxis_PvEror > 0)) Xaxis_I = 0;
   else Xaxis_I += Xaxis_Error;
   Xaxis_I = constrain(Xaxis_I, -200, 200);
 
-  Xaxis_spd = (Xaxis_Error * 0.8)
-              + (Xaxis_I * Xaxis_Ki)
-              + (Xaxis_D * 1.0);
+  Xaxis_spd = (Xaxis_Error * 2.0) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.1);
+
+  // --- stuck detection ---
+  static unsigned long stuckTimer2 = 0;
+  bool isStuck = (abs(Xaxis_spd) <= 8 && abs(Xaxis_Error) > 8);
+
+  if (isStuck) {
+    if (stuckTimer2 == 0) stuckTimer2 = millis();
+    if (millis() - stuckTimer2 > 100) {
+      // เพิ่มแรงนิดหน่อยโดยไม่แตะ PID
+      Xaxis_spd = (Xaxis_Error > 0) ? 30 : -30;
+      // Xaxis_spd =* 2;
+    }
+  } else {
+    stuckTimer2 = 0;
+  }
+  // ----------------------
 
   if (abs(Xaxis_Error) < 5) {
-    Xaxis_spd = 0;  // deadzone
+    Xaxis_spd = 0;
+    stuckTimer2 = 0;
   } else if (abs(Xaxis_spd) < 5 && abs(Xaxis_Error) > 5) {
-    Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;  // min speed
+    Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;
   } else {
     Xaxis_spd = constrain(Xaxis_spd, -80, 80);
   }
@@ -86,27 +164,38 @@ void TrackXaxis() {
   Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
   Xaxis_D = Xaxis_Error - Xaxis_PvEror;
 
-  // I term — reset ถ้า error ข้ามศูนย์ ป้องกัน windup
   if ((Xaxis_Error > 0) != (Xaxis_PvEror > 0)) Xaxis_I = 0;
   else Xaxis_I += Xaxis_Error;
   Xaxis_I = constrain(Xaxis_I, -200, 200);
 
-  Xaxis_spd = (Xaxis_Error * 0.6)
-              + (Xaxis_I * Xaxis_Ki)
-              + (Xaxis_D * 0.8);
+  Xaxis_spd = (Xaxis_Error * 2.0) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.1);
 
   rot_error = 160 - huskylens.blockInfo[1][0].x;
   rot_d = rot_error - rot_pError;
   rot_pError = rot_error;
   rot_w = (rot_error * 0.45) + (rot_i * 0.05) + (rot_d * 0.8);
   rot_w = constrain(rot_w, -100, 100);
-
   if (abs(rot_error) <= 5) rot_w = 0;
 
-  if (abs(Xaxis_Error) < 12) {
-    Xaxis_spd = 0;  // deadzone
-  } else if (abs(Xaxis_spd) < 12 && abs(Xaxis_Error) > 12) {
-    Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;  // min speed
+  // --- stuck detection ---
+  static unsigned long stuckTimer = 0;
+  bool isStuck = (abs(Xaxis_spd) <= 8 && abs(Xaxis_Error) > 8);
+
+  if (isStuck) {
+    if (stuckTimer == 0) stuckTimer = millis();
+    if (millis() - stuckTimer > 100) {
+      Xaxis_spd = (Xaxis_Error > 0) ? 30 : -30;
+    }
+  } else {
+    stuckTimer = 0;
+  }
+  // ----------------------
+
+  if (abs(Xaxis_Error) < 8) {
+    Xaxis_spd = 0;
+    stuckTimer = 0;
+  } else if (abs(Xaxis_spd) < 8 && abs(Xaxis_Error) > 8) {
+    Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;
   } else {
     Xaxis_spd = constrain(Xaxis_spd, -80, 80);
   }
@@ -264,8 +353,7 @@ void AtanTrack4() {
     ballPosY = huskylens.blockInfo[1][0].y;
     float QuaDrantX = huskylens.blockInfo[1][0].x - 160;
     float QuaDrantY = 210 - huskylens.blockInfo[1][0].y;
-    float TanTheta = QuaDrantY / QuaDrantX;
-    float Setha = atan(TanTheta) * (180 / PI);
+    float Setha = atan2(QuaDrantY, QuaDrantX) * (180.0 / PI);
     float SethaPos;
     float DisTanT = sqrt(pow(abs(QuaDrantX), 2) + pow(abs(QuaDrantY), 2));
     if (Setha >= 0) {
@@ -277,12 +365,11 @@ void AtanTrack4() {
     int goalID = (huskylens.blockSize[2]) ? 2 : (huskylens.blockSize[3] ? 3 : -1);
 
     bool ballInDangerZone = false;
-    if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-      float ballX = huskylens.blockInfo[1][0].x;
-      if (ballX < 50 || ballX > 170) {
-        ballInDangerZone = true;
-      }
+    float ballX = huskylens.blockInfo[1][0].x;
+    if (ballX < 50 || ballX > 170) {
+      ballInDangerZone = true;
     }
+
 
     if (goalID != -1 && !ballInDangerZone) {
       // ทำงานเฉพาะตอนเห็นโกล และ บอลไม่อยู่ในเขตอันตราย

@@ -1176,3 +1176,373 @@ void backtogoal() {
     }
   }
 }
+
+long loopTimer;
+
+
+void BackTouchLine() {
+  bypassLR = 0;
+  count = 0;
+  bypassC = 0;
+  countC = 0;
+
+  // state 0 main   state 1
+  int goalEstX, goalEstY, goalEstWidth;
+  int nubL, nubR, vecCurveV;
+  int FoundLeft = 0, FoundRight = 0, FoundCent = 0;
+  int state = 0;
+  int state3Count = 0;
+  int lastVecCurveV = 5;
+  while (!(huskylens.updateBlocks() && huskylens.blockSize[1])) {
+    // if (analogRead(limPin) < 1000) reload();
+
+    if (analogRead(A3) > Sen_Right) {
+      FoundRight = 1;
+    }
+    if (analogRead(A2) > Sen_Left) {
+      FoundLeft = 1;
+    }
+    if (analogRead(A1) > Sen_Front) {
+      FoundCent = 1;
+    }
+    if (FoundRight == 1 && FoundLeft == 1) {
+
+      FoundLeft = 0;
+      FoundRight = 0;
+      count++;
+      loopTimer = millis();
+      while (millis() - loopTimer <= 550) {
+        getIMU();
+        // if (analogRead(A2) > Sen_Left) FoundCent == 1;
+        heading(100, 90, 0);
+        if ((huskylens.updateBlocks() && huskylens.blockSize[1]) /*|| FoundCent == 1*/) {
+          break;
+        }
+      }
+      if (count == 1) {
+        count = 0;
+        state = 3;
+      }
+      // else state = 1;
+    } else if (analogRead(A2) > Sen_Left && analogRead(A3) < Sen_Right && FoundRight == 0) {
+      FoundLeft = 1;
+      // getIMU();
+      holonomic(100, 315, 0);
+      nubL = millis();
+      while (millis() - nubL <= 120) {
+        if (analogRead(A3) > Sen_Right) {
+          holonomic(0, 0, 0);
+          FoundRight = 1;
+          break;
+        }
+      }
+      // state = 1;
+      //break;
+    } else if (analogRead(A2) < Sen_Left && analogRead(A3) > Sen_Right && FoundLeft == 0) {
+      FoundRight = 1;
+      // getIMU();
+      holonomic(100, 225, 0);
+      nubR = millis();
+      while (millis() - nubR <= 150) {
+        if (analogRead(A2) > Sen_Left) {
+          // getIMU();
+          holonomic(0, 0, 0);
+          FoundLeft = 1;
+          break;
+        }
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+          break;
+        }
+      }
+      // state = 1;
+      //break;
+    } else if (analogRead(A3) < Sen_Right && analogRead(A2) < Sen_Left && analogRead(A1) < Sen_Front) {
+      FoundLeft = 0;
+      FoundRight = 0;
+      FoundCent = 0;
+      // อ่าน goal ด้วย MergedGoal
+      MergedGoal goal = getMergedGoalAll();
+      if (goal.found) {
+        goalEstX = goal.x;
+        goalEstWidth = goal.w;
+      } else {
+        goalEstX = 150;
+      }
+      if (!(huskylens.blockSize[2] || huskylens.blockSize[3])) {
+        vecCurveV = 270;
+      } else if (goalEstX >= 150 + 60) {
+        vecCurveV = 315;
+      } else if (goalEstX <= 150 - 60) {
+        vecCurveV = 225;
+      } else {
+        vecCurveV = 270;
+      }
+      getIMU();
+      heading(100, vecCurveV, 0);
+    }
+    if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+      break;
+    }
+
+    if (state == 1) {
+      vecCurveV = 90;
+      getIMU();
+      heading(100, 240, 0);
+
+      if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+        break;
+      }
+      loopTimer = millis();
+      while (millis() - loopTimer <= 1100) {
+        if (analogRead(A2) > Sen_Left && (millis() - loopTimer >= 350)) vecCurveV = 25;
+        else if (analogRead(A3) > Sen_Right && (millis() - loopTimer >= 350)) vecCurveV = 155;
+        // if (analogRead(A2) > Sen_Left) FoundCent == 1;
+        getIMU();
+        heading(100, vecCurveV, 0);
+        if ((huskylens.updateBlocks() && huskylens.blockSize[1]) /*|| FoundCent == 1*/) {
+          break;
+        }
+      }
+      if (vecCurveV == 90) count++;
+      else count = 0;
+      state = 0;
+    } else if (state == 2) {  // ส่ายหน้า
+      int dirs[4] = { 30, -30, -30, 30 };
+      bool seeBall = false;
+
+      for (int round = 0; round < 2 && !seeBall; round++) {
+        for (int i = 0; i < 4 && !seeBall; i++) {
+          loopTimer = millis();
+          while (millis() - loopTimer <= 360) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+              seeBall = true;
+              break;
+            }
+            holonomic(0, 0, dirs[i]);
+          }
+          wheel(0, 0, 0);
+        }
+      }
+      state = 0;  ///   ///////////////////////////////////    ////
+    } else if (state == 4) {
+      count = 0;
+      // beep();
+      // holonomic(0, 0, 0);
+      // if (analogRead(A2) > Sen_Left || analogRead(A3) > Sen_Right || analogRead(A1) > Sen_Front) {
+      //   holonomic(0, 0, 0);
+      //   state = 0;
+      //   break;
+      // }
+      // loopTimer = millis();
+      // while (millis() - loopTimer <= 2000) {
+      loopTimer = millis();
+      while (millis() - loopTimer <= 150) {
+        getIMU();
+        heading(80, 180, 0);
+
+        if (analogRead(A2) > Sen_Left || analogRead(A3) > Sen_Right || analogRead(A1) > Sen_Front || (huskylens.updateBlocks() && huskylens.blockSize[1])) {
+          if (analogRead(A2) > Sen_Left) holonomic(80, 0, 0), delay(200);
+          else if (analogRead(A3) > Sen_Right) holonomic(80, 180, 0), delay(200);
+          else if (analogRead(A1) > Sen_Front) holonomic(80, 270, 0), delay(200);
+          holonomic(0, 0, 0);
+          state = 0;
+          break;
+        }
+      }
+
+      loopTimer = millis();
+      while (state == 4 && millis() - loopTimer <= 900) {
+        getIMU();
+        heading(80, 0, 0);
+
+        if (analogRead(A2) > Sen_Left || analogRead(A3) > Sen_Right || analogRead(A1) > Sen_Front) {
+          if (analogRead(A2) > Sen_Left) holonomic(80, 0, 0), delay(200);
+          else if (analogRead(A3) > Sen_Right) holonomic(80, 180, 0), delay(200);
+          else if (analogRead(A1) > Sen_Front) holonomic(80, 270, 0), delay(200);
+          holonomic(0, 0, 0);
+          state = 0;
+          break;
+        }
+      }
+      loopTimer = millis();
+      while (state == 4 && millis() - loopTimer <= 100) {
+        getIMU();
+        heading(80, 180, 0);
+
+        if (analogRead(A2) > Sen_Left || analogRead(A3) > Sen_Right || analogRead(A1) > Sen_Front) {
+          if (analogRead(A2) > Sen_Left) holonomic(80, 0, 0), delay(200);
+          else if (analogRead(A3) > Sen_Right) holonomic(80, 180, 0), delay(200);
+          else if (analogRead(A1) > Sen_Front) holonomic(80, 270, 0), delay(200);
+          holonomic(0, 0, 0);
+          state = 0;
+          break;
+        }
+      }
+      // loopTimer = millis();
+      // while (state == 2 && millis() - loopTimer <= 450) {
+      //   getIMU();
+      //   heading(80, 245, 0);
+
+      //   if (analogRead(A2) > Sen_Left || analogRead(A3) > Sen_Right || analogRead(A1) > Sen_Front) {
+      //     holonomic(0, 0, 0);
+      //     state = 0;
+      //     break;
+      //   }
+      // }
+
+    } else if (state == 3) {
+      count = 0;
+      long startTime = millis();
+      loopTimer = millis();
+
+      // เลือกทิศทาง vecCurveV ตามเงื่อนไขที่ผู้ใช้ต้องการ
+      if (state3Count == 0) {
+        vecCurveV = (random(0, 1000) < 500) ? 5 : 175;  // สุ่มครั้งแรก
+      } else if (state3Count == 1) {
+        vecCurveV = (lastVecCurveV == 5) ? 175 : 5;  // กลับทิศจากครั้งที่แล้ว
+        state3Count = 0;
+      } else {
+        vecCurveV = (random(0, 1000) < 500) ? 5 : 175;
+      }
+
+      lastVecCurveV = vecCurveV;  // บันทึกค่าล่าสุด
+      state3Count++;              // เพิ่มจำนวนครั้งที่เข้า state 3
+      unsigned long changeDirDelay = random(800, 1000);
+      unsigned long lastSwitchTime = millis();
+      bool wentLeft = (vecCurveV == 5);
+      int switchCount = 0;
+      // เพิ่มตัวแปรเพื่อติดตามเวลาเจอเส้นล่าสุด
+      unsigned long lastLeftDetected = 0;
+      unsigned long lastRightDetected = 0;
+
+
+      while (millis() - loopTimer <= 3000 && !(huskylens.updateBlocks() && huskylens.blockSize[1])) {
+        getIMU();
+        heading(100, vecCurveV, 0);
+
+        int sensorL = analogRead(A2);
+        int sensorR = analogRead(A3);
+        unsigned long currentTime = millis();
+
+        bool switched = false;
+
+        if (sensorL > Sen_Left && sensorR < Sen_Right) {  // เจอเส้นซ้าย
+          if (!wentLeft && millis() - lastRightDetected <= 400) {
+            changeDirDelay += 250;  // เพิ่ม delay หากเพิ่งเจอเส้นขวาใน 100 ms ที่แล้ว
+          }
+          lastLeftDetected = millis();
+
+          if (!wentLeft && currentTime - lastSwitchTime <= 500) {
+            switchCount++;
+          }
+          vecCurveV = 5;
+          wentLeft = true;
+          lastSwitchTime = currentTime;
+        }
+
+        else if (sensorL < Sen_Left && sensorR > Sen_Right) {  // เจอเส้นขวา
+          if (wentLeft && millis() - lastLeftDetected <= 400) {
+            changeDirDelay += 250;  // เพิ่ม delay หากเพิ่งเจอเส้นซ้ายใน 100 ms ที่แล้ว
+          }
+          lastRightDetected = millis();
+
+          if (wentLeft && currentTime - lastSwitchTime <= 500) {
+            switchCount++;
+          }
+          vecCurveV = 175;
+          wentLeft = false;
+          lastSwitchTime = currentTime;
+        }
+
+
+        // หากสลับฝั่งเร็วไปมาหลายครั้ง → เด้งมุมสนาม → เดินหน้าหลบ
+        if (switchCount >= 2) {
+          unsigned long forwardStart = millis();
+          while (millis() - forwardStart <= 500) {
+            getIMU();
+            heading(100, 90, 0);
+          }
+
+          // reset ทุกอย่างหลังหลบมุม
+          switchCount = 0;
+          vecCurveV = (random(0, 1000) <= 500) ? 5 : 175;
+          wentLeft = (vecCurveV == 5);
+          lastSwitchTime = millis();
+          changeDirDelay = random(800, 1000);
+        }
+
+
+        if (currentTime - lastSwitchTime >= changeDirDelay) {
+          vecCurveV = (vecCurveV == 5) ? 175 : 5;
+          wentLeft = !wentLeft;
+          lastSwitchTime = currentTime;
+          changeDirDelay = random(800, 1000);
+        }
+      }
+
+      state = 2;  //// /////////////// /////////////////////////// / // / ///////////////////
+    } else if (state == 5) {
+      // อ่าน goal ด้วย MergedGoal
+      MergedGoal goal = getMergedGoalAll();
+      if (goal.found) {
+        goalEstX = goal.x;
+        goalEstWidth = goal.w;
+      } else {
+        goalEstX = 160;
+      }
+      if (goalEstX > 160 + 40) {
+        vecCurveV = 300;
+      } else if (goalEstX < 160 - 40) {
+        vecCurveV = 240;
+      } else {
+        vecCurveV = 270;
+      }
+      if (FoundRight == 1 && FoundLeft == 1) {
+        FoundLeft = 0;
+        FoundRight = 0;
+        if (count == 0) {
+          state = 1;
+          loopTimer = millis();
+          while (millis() - loopTimer <= 450) {
+            getIMU();
+            // if (analogRead(A2) > Sen_Left) FoundCent == 1;
+            heading(100, 90, 0);
+            if ((huskylens.updateBlocks() && huskylens.blockSize[1]) /*|| FoundCent == 1*/) {
+              break;
+            }
+          }
+        } else state = 1;
+      } else if (analogRead(A2) > Sen_Left && analogRead(A3) < Sen_Right && FoundRight == 0) {
+        FoundLeft = 1;
+        vecCurveV = 300;
+        nubL = millis();
+        while (millis() - nubL <= 100) {
+          if (analogRead(A3) > Sen_Right) {
+            heading(0, 0, 0);
+            FoundRight = 1;
+          }
+        }
+        // state = 1;
+        //break;
+      } else if (analogRead(A2) < Sen_Left && analogRead(A3) > Sen_Right && FoundLeft == 0) {
+        FoundRight = 1;
+        vecCurveV = 240;
+        nubR = millis();
+        while (millis() - nubR <= 150) {
+          if (analogRead(A2) > Sen_Left) {
+            heading(0, 0, 0);
+            FoundLeft = 1;
+          }
+          if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+            break;
+          }
+        }
+        // state = 1;
+        //break;
+      }
+
+      getIMU();
+      heading(100, vecCurveV, 0);
+    }
+  }
+}

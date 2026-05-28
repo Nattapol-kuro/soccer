@@ -136,12 +136,13 @@ void MENU() {
       CoordsBall();
     }
   } else if (x == 3) {
-    S1Def();
     while (1) {
+      S1Def();
     }
   } else if (x == 4) {
     while (1) {
       S_B3();
+      // BackTouchLine();
     }
   } else if (x == 5) {
     while (1) {

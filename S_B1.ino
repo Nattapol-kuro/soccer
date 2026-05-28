@@ -1,8 +1,41 @@
-void S_B1() {  //full state bumpimg on start
+// void S_B1() {  //full state bumpimg on start
+
+//   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+//     MergedGoal goal = getMergedGoalAll();
+//     bool ballInGoalY = (huskylens.blockInfo[1][0].y > goal.y) && (goal.h > 30);
+//     if ((huskylens.updateBlocks() && (huskylens.blockSize[2] || huskylens.blockSize[3])) && ballInGoalY) {
+//       AtanTrack4();
+//     } else {
+//       AtanTrack1();
+//     }
+//   } else {
+//     BackTouchLine();
+//   }
+// }
+
+unsigned long ballLostCooldown = 0;
+
+void S_B1() {
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    AtanTrack1();
+    MergedGoal goal = getMergedGoalAll();
+
+    float ballY = huskylens.blockInfo[1][0].y;
+    float distToGoal = abs(ballY - goal.y);  // ระยะห่างบอล-โกลแกน Y
+
+    bool ballNearGoal = goal.found && (distToGoal < 50) && (goal.h > 30);
+
+    if (ballNearGoal) {
+      beep();
+      while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+        AtanTrack4();  // บอลใกล้โกล → ค่อยๆ หันหาโกลด้วย
+      }
+    } else {
+      AtanTrack1();  // บอลไกล → ไล่บอลปกติ
+    }
   } else {
-    backtogoal();
+    if (millis() - ballLostCooldown < 80) AtanTrack1();  // ยังอยู่ใน cooldown → ไม่เข้า
+    BackTouchLine();
+    ballLostCooldown = millis();
   }
 }
 
@@ -14,8 +47,7 @@ void AtanTrack1() {
     ballPosY = huskylens.blockInfo[1][0].y;
     float QuaDrantX = huskylens.blockInfo[1][0].x - 160;
     float QuaDrantY = 200 - huskylens.blockInfo[1][0].y;
-    float TanTheta = QuaDrantY / QuaDrantX;
-    float Setha = atan(TanTheta) * (180 / PI);
+    float Setha = atan2(QuaDrantY, QuaDrantX) * (180.0 / PI);
     float SethaPos;
     float DisTanT = sqrt(pow(abs(QuaDrantX), 2) + pow(abs(QuaDrantY), 2));
     if (Setha >= 0) {
@@ -51,14 +83,13 @@ void AtanTrack1() {
     }
     if (Yaxis_Error <= 15) {
       getIMU();
-      lastYaw = pvYaw;
       if (abs(pvYaw) <= 5) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
         TrackXaxis2();
         if (abs(Xaxis_Error) <= 15 && firstbump == 1) {
           bump_oblique_test();
         } else if ((abs(Xaxis_Error) <= 15)) {
-          dribblingtothegoal();
           // beep();
+          dribblingtothegoal();
         }
       } else {
         // if (huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3]) bypassYaw = 1;
@@ -67,39 +98,14 @@ void AtanTrack1() {
           rot_error = 160 - huskylens.blockInfo[1][0].x;
           rot_d = rot_error - rot_pError;
           rot_pError = rot_error;
-          rot_w = (rot_error * 0.45) + (rot_i * 0.05) + (rot_d * 0.8);
+          rot_w = (rot_error * 0.5) + (rot_i * 0) + (rot_d * 0.045);
           rot_w = constrain(rot_w, -100, 100);
-          Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
-          Xaxis_D = Xaxis_Error - Xaxis_PvEror;
-          Xaxis_PvEror = Xaxis_Error;
 
-          // int rot = (Xaxis_Error * Xaxis_Kp) + (Xaxis_D * Xaxis_Kd);
-          // rot = constrain(rot, -100, 100);
-          if (abs(rot_error) <= 3) rot_w = 0;
+          // if (abs(rot_error) <= 2.5) rot_w = 0;
 
-          Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
-          Xaxis_D = Xaxis_Error - Xaxis_PvEror;
-
-          // I term — reset ถ้า error ข้ามศูนย์ ป้องกัน windup
-          if ((Xaxis_Error > 0) != (Xaxis_PvEror > 0)) Xaxis_I = 0;
-          else Xaxis_I += Xaxis_Error;
-          Xaxis_I = constrain(Xaxis_I, -200, 200);
-
-          Xaxis_spd = (Xaxis_Error * 0.6)
-                      + (Xaxis_I * Xaxis_Ki)
-                      + (Xaxis_D * 0.8);
-
-          if (abs(Xaxis_Error) < 5) {
-            Xaxis_spd = 0;  // deadzone
-          } else if (abs(Xaxis_spd) < 12 && abs(Xaxis_Error) > 12) {
-            Xaxis_spd = (Xaxis_spd > 0) ? 20 : -120;  // min speed
-          } else {
-            Xaxis_spd = constrain(Xaxis_spd, -80, 80);
-          }
-
-          vecCurve = (pvYaw >= 0) ? 180 : 0;
-          if(abs(pvYaw) > 45) holonomic(70, vecCurve, rot_w);
-          else holonomic(30, vecCurve, rot_w);
+          vecCurve = (pvYaw >= 0) ? 170 : 10;
+          if (abs(pvYaw) > 35) holonomic(80, vecCurve, rot_w);
+          else holonomic(40, vecCurve, rot_w);
           if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
         }
       }
