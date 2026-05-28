@@ -78,7 +78,7 @@ float estimatedX = 0.0f;
 float estimatedY = 0.0f;
 
 int menu() {
-  int NUMBER_KNOB = 4;
+  int NUMBER_KNOB = 5;
   int lastX = -1;
 
   while (1) {
@@ -87,7 +87,7 @@ int menu() {
     x = constrain(x, 1, NUMBER_KNOB);
 
     if (x != lastX) {
-      sound((x * 750), 50);
+      sound((x * 600), 50);
       lastX = x;
     }
 
@@ -97,8 +97,9 @@ int menu() {
 
     if (x == 1) oled.text(4, 0, ">chksens", x);
     if (x == 2) oled.text(4, 0, ">CoordsBall", x);
-    if (x == 3) oled.text(4, 0, ">D_B", x);
+    if (x == 3) oled.text(4, 0, ">S_B5", x);
     if (x == 4) oled.text(4, 0, ">S_B3", x);
+    if (x == 5) oled.text(4, 0, ">S_B1", x);
 
     oled.text(6, 5, "PRESS_SW_OK", x);
     oled.show();
@@ -135,12 +136,16 @@ void MENU() {
       CoordsBall();
     }
   } else if (x == 3) {
+    S1Def();
     while (1) {
-      // D_B();
     }
   } else if (x == 4) {
     while (1) {
       S_B3();
+    }
+  } else if (x == 5) {
+    while (1) {
+      S_B1();
     }
   }
 }
@@ -300,7 +305,7 @@ void setup() {
     delay(100);
   }
   delay(1000);
-  reload();
+  // reload();
   Auto_zero();
   delay(500);
   // waitSW_OK_bmp();
@@ -349,6 +354,22 @@ void loop() {
   // }
   // wheel(0, 0, 0);
   MENU();
+
+  // bbgg();
+
+  // long looptime = millis();
+  // while (millis() - looptime <= 500) {
+  //   // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
+  //   // if (goalID == -1) break;
+  //   huskylens.updateBlocks();
+  //   // goalID = huskylens.blockSize[2] ? 2 : (huskylens.blockSize[3] ? 3 : -1);
+  //   heading(100, 90, -60);  // เฉียงขวา
+  //   lastYaw = pvYaw;
+  // }
+  // oled.text(3, 3,"%+f", lastYaw);
+  // oled.show();
+  // heading(100, 270, lastYaw);
+
   // Atantrak_dibbling();
   // AtanTrack3();
   // Bumping();
@@ -439,6 +460,12 @@ void CoordsBall() {
     // Serial.print("\t\t");
     // Serial.print("ballY  ");
     // Serial.print(ballPosY);
+
+    // oled.text(2, 3, "ballX : %d", ballX);
+    oled.text(3, 3, "ballXpos : %d", ballPosX);
+    // oled.text(4, 3, "ballY : %d", ballY);
+    oled.text(5, 3, "ballYpos : %d", ballPosY);
+    oled.show();
 
     ballPosX = huskylens.blockInfo[1][0].x;
     ballPosY = huskylens.blockInfo[1][0].y;

@@ -1,21 +1,56 @@
+int getGoalY() {
+  if (!huskylens.updateBlocks()) return 0;
+  if (huskylens.blockSize[2] > 0) return huskylens.blockInfo[2][0].y;
+  if (huskylens.blockSize[3] > 0) return huskylens.blockInfo[3][0].y;
+  return 0;
+}
+
+
 void bbgg() {
   int state = 0;
   long looptime;
   float Goal_Error = 0;
-  oled.clear();
+  bool left = 0;
+  bool right = 0;
+  int vecC = 0;
   while (!(huskylens.updateBlocks() && huskylens.blockSize[1])) {
+    // if (analogRead(SenL) > Sen_Left && analogRead(SenR) > Sen_Right) {
+    //   state = 0;
+    // } else if (analogRead(SenL) > Sen_Left) {
+    //   vecC = 0;
+    // } else if (analogRead(SenR) > Sen_Right) {
+    //   vecC = 180;
+    // }
+    // looptime = millis();
+    // while (millis() - looptime <= 150) {
+    //   if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+    //   heading(100, vecC, 0);
+    // }
+    wheel(0, 0, 0);
     if (state == 0) {
-      looptime = millis();
-      while (millis() - looptime <= 800) {
-        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-        heading(100, 270, 0);
-      }
-      wheel(0, 0, 0);
-      if (huskylens.updateBlocks()) {
-        int goalX = 0;
-        if (getGoalCenter(goalX)) {
-          Goal_Error = goalX - 160;
-          state = (Goal_Error > 0) ? 1 : 2;
+      huskylens.updateBlocks();
+      int goalY = getGoalY();
+      if (goalY < 35 && (!(huskylens.updateBlocks() && huskylens.blockSize[1]))) {
+        if (huskylens.updateBlocks()) {
+          int goalX = 0;
+          if (getGoalCenter(goalX)) {
+            Goal_Error = goalX - 160;
+            state = (Goal_Error > 0) ? 5 : 6;
+          }
+        }
+      } else {
+        looptime = millis();
+        while (millis() - looptime <= 800) {
+          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+          heading(100, 270, 0);
+        }
+        wheel(0, 0, 0);
+        if (huskylens.updateBlocks()) {
+          int goalX = 0;
+          if (getGoalCenter(goalX)) {
+            Goal_Error = goalX - 160;
+            state = (Goal_Error > 0) ? 1 : 2;
+          }
         }
       }
     } else if (state == 1) {
@@ -69,23 +104,17 @@ void bbgg() {
         wheel(0, 0, 0);
         state = 3;  // กลางแล้ว
       }
-      // oled.text(3, 0, "x2:%d x3:%d", huskylens.blockInfo[2][0].x, huskylens.blockInfo[3][0].x);
-      // oled.text(3, 3, "bs2:%d bs3:%d", huskylens.blockSize[2], huskylens.blockSize[3]);
-      // oled.show();
     } else if (state == 3) {
       bool hitLine = false;
-      bool left = 0;
-      bool right = 0;
-      long looptimer;
       int vecCurve = 270;
 
       while (!hitLine) {
         if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
         heading(100, 270, 0);  // ถอยตรง
 
-        if (analogRead(A2) > Sen_Left) {
-          looptimer = millis();
-          while (millis() - looptimer <= 100) {
+        if (analogRead(SenL) > Sen_Left) {
+          looptime = millis();
+          while (millis() - looptime <= 100) {
             if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
             if (analogRead(A3) > Sen_Right) {
               wheel(0, 0, 0);
@@ -97,9 +126,9 @@ void bbgg() {
           left = 1;
           if (left && right) hitLine = true;
 
-        } else if (analogRead(A3) > Sen_Right) {
-          looptimer = millis();
-          while (millis() - looptimer <= 100) {
+        } else if (analogRead(SenR) > Sen_Right) {
+          looptime = millis();
+          while (millis() - looptime <= 100) {
             if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
             if (analogRead(A2) > Sen_Left) {
               wheel(0, 0, 0);
@@ -113,10 +142,87 @@ void bbgg() {
         }
       }
       wheel(0, 0, 0);
-      if (left == 1 && right == 1) {
+      if (left == 1 || right == 1) {
         state = 4;
       }
     } else if (state == 4) {
+      looptime = millis();
+      while (millis() - looptime <= 900) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        heading(100, 90, 0);
+      }
+      wheel(0, 0, 0);
+      state = 5;
+    } else if (state == 5) {
+      bool seeBall = false;
+
+      for (int round = 0; !seeBall; round++) {
+
+        int dirs[4] = { 180, 0, 0, 180 };
+
+        for (int i = 0; i < 4 && !seeBall; i++) {
+          looptime = millis();
+
+          while (millis() - looptime <= 400) {
+            if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+              seeBall = true;
+              break;
+            }
+            heading(70, dirs[i], 0);
+          }
+          wheel(0, 0, 0);
+        }
+      }
+    } else if (state == 6) {
+      // ซ้าย: โกลอยู่ขวากล้อง (Error+) → slide ซ้าย จนกลาง
+      if (!huskylens.updateBlocks()) continue;
+
+      float sumX = 0;
+      int cnt = 0;
+      if (huskylens.blockSize[2] > 0) {
+        sumX += huskylens.blockInfo[2][0].x;
+        cnt++;
+      }
+      if (huskylens.blockSize[3] > 0) {
+        sumX += huskylens.blockInfo[3][0].x;
+        cnt++;
+      }
+      if (cnt == 0) continue;
+
+      Goal_Error = (sumX / cnt) - 185;
+
+      if (Goal_Error > 2) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        heading(100, 0, 0);  // slide ซ้าย
+      } else {
+        wheel(0, 0, 0);
+        state = 5;  // กลางแล้ว
+      }
+    } else if (state == 7) {
+      // ขวา: โกลอยู่ซ้ายกล้อง (Error-) → slide ขวา จนกลาง
+      if (!huskylens.updateBlocks()) continue;
+
+      float sumX = 0;
+      int cnt = 0;
+      if (huskylens.blockSize[2] > 0) {
+        sumX += huskylens.blockInfo[2][0].x;
+        cnt++;
+      }
+      if (huskylens.blockSize[3] > 0) {
+        sumX += huskylens.blockInfo[3][0].x;
+        cnt++;
+      }
+      if (cnt == 0) continue;
+
+      Goal_Error = (sumX / cnt) - 150;
+
+      if (Goal_Error < 2) {
+        if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+        heading(100, 180, 5);  // slide ขวา
+      } else {
+        wheel(0, 0, 0);
+        state = 5;
+      }
     }
   }
 }
@@ -334,12 +440,10 @@ void bbgg() {
 //           }
 //           wheel(0, 0, 0);
 //         }
-// <<<<<<< HEAD
 //         state = 5;
 //       } else if (state == 5) {
 //         int totalRounds = 4;
 //         bool seeBall = false;
-// =======
 //       } else {
 //         looptimer = millis();
 //         while (millis() - looptimer <= 500) {
@@ -377,8 +481,6 @@ void bbgg() {
 //     } else if (state == 5) {
 //       int totalRounds = 4;
 //       bool seeBall = false;
-// >>>>>>> 82ec3ec37e199dd12acb82436e556f9ef2ace74a
-
 //         for (int round = 0; round < totalRounds && !seeBall; round++) {
 
 //           int dirs[4] = { 30, -30, -30, 30 };
