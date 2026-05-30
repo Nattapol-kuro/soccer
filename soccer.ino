@@ -35,14 +35,14 @@ int discoveState = 1;
 float head_error, head_pError, head_w, head_d, head_i;
 //////////////////////////////////
 #define limPin A0
-#define reloadSpd 70
+#define reloadSpd 90
 //////////////////////////////////
 #define SenF A1
 #define SenL A2
 #define SenR A3
-#define Sen_Front (3333 + 452) / 2
-#define Sen_Left (3969 + 1015) / 2
-#define Sen_Right (3956 + 500) / 2
+#define Sen_Front (3333 + 200) / 2
+#define Sen_Left (3969 + 200) / 2
+#define Sen_Right (3956 + 200) / 2
 //////////////////////////////////
 // #define Xaxis_Kp 1.2
 // #define Xaxis_Ki 0.005
@@ -78,7 +78,7 @@ float estimatedX = 0.0f;
 float estimatedY = 0.0f;
 
 int menu() {
-  int NUMBER_KNOB = 5;
+  int NUMBER_KNOB = 9;
   int lastX = -1;
 
   while (1) {
@@ -87,19 +87,24 @@ int menu() {
     x = constrain(x, 1, NUMBER_KNOB);
 
     if (x != lastX) {
-      sound((x * 600), 50);
+      // sound((x * (3000 / 8)), 50);
+      // sound(3000,100);
       lastX = x;
     }
 
     oled.clear();
-    oled.text(0, NUMBER_KNOB, "    === MENU! ===    ", x);
+    oled.text(0, NUMBER_KNOB, "=== MENU! ===    ", x);
     oled.text(2, 0, "CASE = %d", x);
 
     if (x == 1) oled.text(4, 0, ">chksens", x);
     if (x == 2) oled.text(4, 0, ">CoordsBall", x);
-    if (x == 3) oled.text(4, 0, ">S_B5", x);
-    if (x == 4) oled.text(4, 0, ">S_B3", x);
+    if (x == 3) oled.text(4, 0, ">S1Def", x);
+    if (x == 4) oled.text(4, 0, ">S3Def", x);
     if (x == 5) oled.text(4, 0, ">S_B1", x);
+    if (x == 6) oled.text(4, 0, ">S_B3", x);
+    if (x == 7) oled.text(4, 0, ">S_B5", x);
+    if (x == 8) oled.text(4, 0, ">penaltyshoot", x);
+    if (x == 9) oled.text(4, 0, ">penaltysave", x);
 
     oled.text(6, 5, "PRESS_SW_OK", x);
     oled.show();
@@ -136,17 +141,34 @@ void MENU() {
       CoordsBall();
     }
   } else if (x == 3) {
-    while (1) {
-      S1Def();
-    }
+    // while (1) {
+    S1Def();
+    // }
   } else if (x == 4) {
-    while (1) {
-      S_B3();
-      // BackTouchLine();
-    }
+    // while (1) {
+    S3Def();
+    // BackTouchLine();
+    // }
   } else if (x == 5) {
     while (1) {
       S_B1();
+    }
+  } else if (x == 6) {
+    while (1) {
+      S_B3();
+    }
+  } else if (x == 7) {
+    while (1) {
+      S_B5();
+      // BackTouchLine();
+    }
+  } else if (x == 8) {
+    while (1) {
+      penaltyshoot();
+    }
+  } else if (x == 9) {
+    while (1) {
+      penaltysave();
     }
   }
 }
@@ -267,7 +289,7 @@ void heading(float spd, float theta, float spYaw) {
 
 void shoot() {
   // beep();
-  motor(4, reloadSpd);
+  motor(4,65);
   delay(150);
   motor(4, 0);
   delay(50);
@@ -277,17 +299,18 @@ int timer = 0;
 void reload() {
   motor(4, reloadSpd);
   timer = 0;
-  for (int i = 0; i < 2500; i++) {
+  for (int i = 0; i < 800; i++) {
     timer++;
     if (analogRead(limPin) > 1000) break;
     delay(1);
   }
-  if (timer == 2500) {     // ถ้าก้านยิงติด
+  if (timer == 700) {     // ถ้าก้านยิงติด
     motor(4, -reloadSpd);  // เลื่อนก้านยิงไปข้างหน้า
     delay(500);            //ก่อน 0.5 วินาที
+    // sound(800,500);
     motor(4, reloadSpd);
     timer = 0;
-    for (int i = 0; i < 2500; i++) {
+    for (int i = 0; i < 800; i++) {
       timer++;
       if ((analogRead(limPin) > 1000)) break;
       delay(1);
@@ -306,14 +329,13 @@ void setup() {
     delay(100);
   }
   delay(1000);
-  // reload();
   Auto_zero();
   delay(500);
   // waitSW_OK_bmp();
   // if (SW_A()) {
   //   shoot();
   //   delay(150);
-  //   reload();
+  reload();
   // }
   // if (SW_B()) {
   //   Auto_zero();
@@ -344,7 +366,7 @@ void setup() {
 void loop() {
   // oled.text(4, 0, "lim=%d     ", analog(0));
   // oled.show();
-  // AtanTrack3();
+  // AtanTrack1();
   // waitSW_OK_bmp();
   // bump();
   // S_B();
@@ -354,9 +376,9 @@ void loop() {
   //   heading(100, 90, 45);
   // }
   // wheel(0, 0, 0);
-  MENU();
+  // dribblingtothegoal();
 
-  // bbgg();
+  MENU();
 
   // long looptime = millis();
   // while (millis() - looptime <= 500) {

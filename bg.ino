@@ -73,7 +73,7 @@ void bbgg() {
 
       if (Goal_Error > 2) {
         if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-        heading(100, 0, 0);  // slide ซ้าย
+        heading(100, -20, 0);  // slide ซ้าย
       } else {
         wheel(0, 0, 0);
         state = 3;  // กลางแล้ว
@@ -99,7 +99,7 @@ void bbgg() {
 
       if (Goal_Error < 2) {
         if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-        heading(100, 180, 5);  // slide ขวา
+        heading(100, 200, 0);  // slide ขวา
       } else {
         wheel(0, 0, 0);
         state = 3;  // กลางแล้ว
@@ -1181,10 +1181,6 @@ long loopTimer;
 
 
 void BackTouchLine() {
-  bypassLR = 0;
-  count = 0;
-  bypassC = 0;
-  countC = 0;
 
   // state 0 main   state 1
   int goalEstX, goalEstY, goalEstWidth;
@@ -1193,8 +1189,43 @@ void BackTouchLine() {
   int state = 0;
   int state3Count = 0;
   int lastVecCurveV = 5;
+
   while (!(huskylens.updateBlocks() && huskylens.blockSize[1])) {
     // if (analogRead(limPin) < 1000) reload();
+    long ImuOUT = millis;
+    while (getIMU() && abs(pvYaw) < 2 && !(huskylens.updateBlocks() && huskylens.blockSize[1])) {
+      if (millis() - ImuOUT > 200) {
+        break;
+      }
+      heading(0, 0, 0);
+    }
+    if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
+      wheel(0, 0, 0);
+      loopTimer = millis();
+      while (millis() - loopTimer <= 200) {
+        ballPosX = huskylens.blockInfo[1][0].x;
+        ballPosY = huskylens.blockInfo[1][0].y;
+        float QuaDrantX = huskylens.blockInfo[1][0].x - 160;
+        float QuaDrantY = 200 - huskylens.blockInfo[1][0].y;
+        float Setha = atan2(QuaDrantY, QuaDrantX) * (180.0 / PI);
+        float SethaPos;
+        float DisTanT = sqrt(pow(abs(QuaDrantX), 2) + pow(abs(QuaDrantY), 2));
+        if (Setha >= 0) {
+          SethaPos = Setha;
+        } else if (Setha < 0) {
+          SethaPos = 180 + Setha;
+        }
+        // SetYaw();
+        Yaxis_Error = 180 - huskylens.blockInfo[1][0].y;
+        Yaxis_D = Yaxis_Error - Yaxis_PvEror;
+        Yaxis_spd = (Yaxis_Error * Yaxis_Kp) + (Yaxis_D * Yaxis_Kd);
+        Yaxis_spd = constrain(Yaxis_spd, -100, 100);
+        Yaxis_PvEror = Yaxis_Error;
+
+        holonomic(Yaxis_spd, SethaPos, 0);
+      }
+      break;
+    }
 
     if (analogRead(A3) > Sen_Right) {
       FoundRight = 1;
@@ -1206,7 +1237,6 @@ void BackTouchLine() {
       FoundCent = 1;
     }
     if (FoundRight == 1 && FoundLeft == 1) {
-
       FoundLeft = 0;
       FoundRight = 0;
       count++;
@@ -1219,6 +1249,13 @@ void BackTouchLine() {
           break;
         }
       }
+      if (analogRead(A2) > Sen_Left && analogRead(A3) > Sen_Right && (huskylens.blockInfo[2][0].y || huskylens.blockInfo[3][0].y) > 100) {
+        long looptime;
+        while (millis() - looptime <= 500) {
+          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+          heading(100, 270, 0);
+        }
+      }
       if (count == 1) {
         count = 0;
         state = 3;
@@ -1229,7 +1266,7 @@ void BackTouchLine() {
       // getIMU();
       holonomic(100, 315, 0);
       nubL = millis();
-      while (millis() - nubL <= 120) {
+      while (millis() - nubL <= 80) {
         if (analogRead(A3) > Sen_Right) {
           holonomic(0, 0, 0);
           FoundRight = 1;
@@ -1243,7 +1280,7 @@ void BackTouchLine() {
       // getIMU();
       holonomic(100, 225, 0);
       nubR = millis();
-      while (millis() - nubR <= 150) {
+      while (millis() - nubR <= 80) {
         if (analogRead(A2) > Sen_Left) {
           // getIMU();
           holonomic(0, 0, 0);
@@ -1266,13 +1303,13 @@ void BackTouchLine() {
         goalEstX = goal.x;
         goalEstWidth = goal.w;
       } else {
-        goalEstX = 150;
+        goalEstX = 160;
       }
       if (!(huskylens.blockSize[2] || huskylens.blockSize[3])) {
         vecCurveV = 270;
-      } else if (goalEstX >= 150 + 60) {
+      } else if (goalEstX >= 160 + 50) {
         vecCurveV = 315;
-      } else if (goalEstX <= 150 - 60) {
+      } else if (goalEstX <= 160 - 50) {
         vecCurveV = 225;
       } else {
         vecCurveV = 270;
@@ -1280,6 +1317,37 @@ void BackTouchLine() {
       getIMU();
       heading(100, vecCurveV, 0);
     }
+    // else if (analogRead(A3) < Sen_Right && analogRead(A2) < Sen_Left && analogRead(A1) < Sen_Front) {
+    //   FoundLeft = 0;
+    //   FoundRight = 0;
+    //   FoundCent = 0;
+
+    //   MergedGoal goal = getMergedGoalAll();
+    //   if (goal.found) {
+    //     goalEstX = goal.x;
+    //     goalEstWidth = goal.w;
+    //   } else {
+    //     goalEstX = 160;
+    //     goalEstWidth = 0;
+    //   }
+
+    //   if (!(huskylens.blockSize[2] || huskylens.blockSize[3])) {
+    //     // ไม่เห็นโกลเลย → ถอยตรง
+    //     vecCurveV = 270;
+    //   } else if (goalEstX >= 160 + 25) {
+    //     // โกลอยู่ขวา → สไลขวาก่อน ยังไม่ถอย
+    //     vecCurveV = 0;
+    //   } else if (goalEstX <= 160 - 25) {
+    //     // โกลอยู่ซ้าย → สไลซ้ายก่อน ยังไม่ถอย
+    //     vecCurveV = 180;
+    //   } else {
+    //     // กลางโกลแล้ว → ถอยตรง
+    //     vecCurveV = 270;
+    //   }
+
+    //   getIMU();
+    //   heading(100, vecCurveV, 0);
+    // }
     if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
       break;
     }
@@ -1307,7 +1375,7 @@ void BackTouchLine() {
       else count = 0;
       state = 0;
     } else if (state == 2) {  // ส่ายหน้า
-      int dirs[4] = { 30, -30, -30, 30 };
+      int dirs[4] = { 40, -40, -40, 40 };
       bool seeBall = false;
 
       for (int round = 0; round < 2 && !seeBall; round++) {
@@ -1322,6 +1390,30 @@ void BackTouchLine() {
           }
           wheel(0, 0, 0);
         }
+      }
+      wheel(0, 0, 0);
+      loopTimer = millis();
+      while (millis() - loopTimer <= 200) {
+        ballPosX = huskylens.blockInfo[1][0].x;
+        ballPosY = huskylens.blockInfo[1][0].y;
+        float QuaDrantX = huskylens.blockInfo[1][0].x - 160;
+        float QuaDrantY = 200 - huskylens.blockInfo[1][0].y;
+        float Setha = atan2(QuaDrantY, QuaDrantX) * (180.0 / PI);
+        float SethaPos;
+        float DisTanT = sqrt(pow(abs(QuaDrantX), 2) + pow(abs(QuaDrantY), 2));
+        if (Setha >= 0) {
+          SethaPos = Setha;
+        } else if (Setha < 0) {
+          SethaPos = 180 + Setha;
+        }
+        // SetYaw();
+        Yaxis_Error = 180 - huskylens.blockInfo[1][0].y;
+        Yaxis_D = Yaxis_Error - Yaxis_PvEror;
+        Yaxis_spd = (Yaxis_Error * Yaxis_Kp) + (Yaxis_D * Yaxis_Kd);
+        Yaxis_spd = constrain(Yaxis_spd, -100, 100);
+        Yaxis_PvEror = Yaxis_Error;
+
+        holonomic(Yaxis_spd, SethaPos, 0);
       }
       state = 0;  ///   ///////////////////////////////////    ////
     } else if (state == 4) {

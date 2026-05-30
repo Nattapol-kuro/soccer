@@ -1,8 +1,33 @@
+long startDeft;
+
 void S_B3() {  //full state but not bump
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    AtanTrack3();
+    long looptime;
+    if (analogRead(A1) > Sen_Front && (!((huskylens.updateBlocks() && huskylens.blockSize[2]) || (huskylens.updateBlocks() && huskylens.blockSize[3])))) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        heading(100, 270, 0);
+      }
+    } else if (analogRead(A2) > Sen_Left && (millis() - startDeft > 1000)) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        holonomic(100, 0, 0);
+      }
+      wheel(0, 0, 0);
+    } else if (analogRead(A3) > Sen_Right && (millis() - startDeft > 1000)) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        holonomic(100, 180, 0);
+      }
+      wheel(0, 0, 0);
+    } else {
+      AtanTrack3();
+    }
   } else {
-    bbgg();
+    if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) {
+      BackTouchLine();
+    }
+    BackTouchLine();
   }
 }
 
@@ -126,7 +151,7 @@ void TrackXaxis2() {
   else Xaxis_I += Xaxis_Error;
   Xaxis_I = constrain(Xaxis_I, -200, 200);
 
-  Xaxis_spd = (Xaxis_Error * 2.0) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.1);
+  Xaxis_spd = (Xaxis_Error * 0.5) + (Xaxis_I * Xaxis_Ki) + (Xaxis_D * 0.8);
 
   // --- stuck detection ---
   static unsigned long stuckTimer2 = 0;
@@ -136,7 +161,7 @@ void TrackXaxis2() {
     if (stuckTimer2 == 0) stuckTimer2 = millis();
     if (millis() - stuckTimer2 > 100) {
       // เพิ่มแรงนิดหน่อยโดยไม่แตะ PID
-      Xaxis_spd = (Xaxis_Error > 0) ? 30 : -30;
+      Xaxis_spd += (Xaxis_Error > 0) ? 15 : -15;
       // Xaxis_spd =* 2;
     }
   } else {
@@ -144,10 +169,10 @@ void TrackXaxis2() {
   }
   // ----------------------
 
-  if (abs(Xaxis_Error) < 5) {
+  if (abs(Xaxis_Error) < 8) {
     Xaxis_spd = 0;
     stuckTimer2 = 0;
-  } else if (abs(Xaxis_spd) < 5 && abs(Xaxis_Error) > 5) {
+  } else if (abs(Xaxis_spd) < 8 && abs(Xaxis_Error) > 8) {
     Xaxis_spd = (Xaxis_spd > 0) ? 15 : -15;
   } else {
     Xaxis_spd = constrain(Xaxis_spd, -80, 80);
@@ -205,11 +230,12 @@ void TrackXaxis() {
   holonomic(Xaxis_spd, 0, rot_w);
 }
 
+
 void AtanTrack3() {
   if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
     ballPosX = huskylens.blockInfo[1][0].x;
     ballPosY = huskylens.blockInfo[1][0].y;
-    float QuaDrantX = huskylens.blockInfo[1][0].x - 150;
+    float QuaDrantX = huskylens.blockInfo[1][0].x - 160;
     float QuaDrantY = 180 - huskylens.blockInfo[1][0].y;
     float TanTheta = QuaDrantY / QuaDrantX;
     float Setha = atan(TanTheta) * (180 / PI);
@@ -396,7 +422,7 @@ void AtanTrack4() {
 
     rot_w = constrain(rot_w, -40, 40);
     getIMU();
-    Yaxis_Error = 180 - huskylens.blockInfo[1][0].y;
+    Yaxis_Error = 190 - huskylens.blockInfo[1][0].y;
     Yaxis_D = Yaxis_Error - Yaxis_PvEror;
     Yaxis_spd = (Yaxis_Error * Yaxis_Kp) + (Yaxis_D * Yaxis_Kd);
     Yaxis_spd = constrain(Yaxis_spd, -100, 100);
@@ -411,7 +437,7 @@ void AtanTrack4() {
         SethaPos = 0;
       }
     }
-    if (abs(ballPosX - 160) < 20 && Yaxis_Error < 5) {
+    if (abs(ballPosX - 160) < 20 && Yaxis_Error < 8) {
       // beep();
       dribblingtothegoal();
       // bump();

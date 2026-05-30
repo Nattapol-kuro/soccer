@@ -16,32 +16,54 @@
 unsigned long ballLostCooldown = 0;
 
 void S_B1() {
+  MergedGoal goal = getMergedGoalAll();
+  long looptime;
+
+  float ballY = huskylens.blockInfo[1][0].y;
+  float distToGoal = abs(ballY - goal.y);  // ระยะห่างบอล-โกลแกน Y
+
+  bool ballNearGoal = goal.found && (distToGoal < 30) && (goal.h > 30);
+
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    MergedGoal goal = getMergedGoalAll();
-
-    float ballY = huskylens.blockInfo[1][0].y;
-    float distToGoal = abs(ballY - goal.y);  // ระยะห่างบอล-โกลแกน Y
-
-    bool ballNearGoal = goal.found && (distToGoal < 50) && (goal.h > 30);
-
-    if (ballNearGoal) {
-      beep();
-      while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-        AtanTrack4();  // บอลใกล้โกล → ค่อยๆ หันหาโกลด้วย
+    if (analogRead(A2) > Sen_Left) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        holonomic(100, 0, 0);
       }
+      wheel(0, 0, 0);
+    } else if (analogRead(A3) > Sen_Right) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        holonomic(100, 180, 0);
+      }
+      wheel(0, 0, 0);
     } else {
+      // if (ballNearGoal) {
+      //   // beep();
+      //   while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+      //     AtanTrack4();  // บอลใกล้โกล → ค่อยๆ หันหาโกลด้วย
+      //   }
+      // } else {
       AtanTrack1();  // บอลไกล → ไล่บอลปกติ
+      // }
     }
   } else {
-    if (millis() - ballLostCooldown < 80) AtanTrack1();  // ยังอยู่ใน cooldown → ไม่เข้า
+    // if (millis() - ballLostCooldown < 80) AtanTrack1();  // ยังอยู่ใน cooldown → ไม่เข้า
     BackTouchLine();
-    ballLostCooldown = millis();
+    // ballLostCooldown = millis();
   }
 }
 
 bool firstbump = 1;
 
 void AtanTrack1() {
+
+  float goalEstX, goalEstY, goalEstWidth;
+
+  float goalLeft = goalEstX - goalEstWidth / 2.0;
+  float goalRight = goalEstX + goalEstWidth / 2.0;
+  bool ballInGoalArea = false;
+
   if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
     ballPosX = huskylens.blockInfo[1][0].x;
     ballPosY = huskylens.blockInfo[1][0].y;
@@ -65,7 +87,6 @@ void AtanTrack1() {
     getIMU();
     holonomic(Yaxis_spd, SethaPos, 0);
 
-    float goalEstX, goalEstY, goalEstWidth;
     if (huskylens.blockSize[2]) {
       goalEstX = huskylens.blockInfo[2][0].x;
       goalEstY = huskylens.blockInfo[2][0].y;
@@ -75,16 +96,16 @@ void AtanTrack1() {
       goalEstY = huskylens.blockInfo[3][0].y;
       goalEstWidth = huskylens.blockInfo[3][0].width;
     }
-    float goalLeft = goalEstX - goalEstWidth / 2.0;
-    float goalRight = goalEstX + goalEstWidth / 2.0;
-    bool ballInGoalArea = false;
+    goalLeft = goalEstX - goalEstWidth / 2.0;
+    goalRight = goalEstX + goalEstWidth / 2.0;
     if (goalEstWidth > 0) {
       ballInGoalArea = (ballPosX >= goalLeft && ballPosX <= goalRight);
-    }
+    } else ballInGoalArea = false;
+
     if (Yaxis_Error <= 15) {
       getIMU();
-      if (abs(pvYaw) <= 5) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
-        TrackXaxis2();
+      if (abs(pvYaw) <= 8 || ballInGoalArea) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
+        TrackXaxis();
         if (abs(Xaxis_Error) <= 15 && firstbump == 1) {
           bump_oblique_test();
         } else if ((abs(Xaxis_Error) <= 15)) {
@@ -93,7 +114,20 @@ void AtanTrack1() {
         }
       } else {
         // if (huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3]) bypassYaw = 1;
-        while (abs(pvYaw) >= 5) {
+        while (abs(pvYaw) >= 8 && huskylens.updateBlocks()) {
+          if (huskylens.blockSize[2]) {
+            goalEstX = huskylens.blockInfo[2][0].x;
+            goalEstY = huskylens.blockInfo[2][0].y;
+            goalEstWidth = huskylens.blockInfo[2][0].width;
+          } else if (huskylens.blockSize[3]) {
+            goalEstX = huskylens.blockInfo[3][0].x;
+            goalEstY = huskylens.blockInfo[3][0].y;
+            goalEstWidth = huskylens.blockInfo[3][0].width;
+          }
+          if (goalEstWidth > 0) {
+            ballInGoalArea = (ballPosX >= goalLeft && ballPosX <= goalRight);
+          } else ballInGoalArea = false;
+
           getIMU();
           rot_error = 160 - huskylens.blockInfo[1][0].x;
           rot_d = rot_error - rot_pError;
@@ -104,8 +138,9 @@ void AtanTrack1() {
           // if (abs(rot_error) <= 2.5) rot_w = 0;
 
           vecCurve = (pvYaw >= 0) ? 170 : 10;
-          if (abs(pvYaw) > 35) holonomic(80, vecCurve, rot_w);
-          else holonomic(40, vecCurve, rot_w);
+          if (abs(pvYaw) > 50) holonomic(80, vecCurve, rot_w);
+          else if (abs(pvYaw) > 35) holonomic(40, vecCurve, rot_w);
+          else holonomic(25, vecCurve, rot_w);
           if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
         }
       }
@@ -243,37 +278,45 @@ void bump_oblique_test() {
       state = 2;
 
     } else if (state == 2) {
+      // beep();
       // looptime = millis();
       // while (millis() - looptime <= 800) {
-      // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
-      if (goalOnLeft) {
-        looptime = millis();
-        while (millis() - looptime <= 500) {
-          // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
-          if (goalID == -1) break;
-          huskylens.updateBlocks();
-          goalID = huskylens.blockSize[2] ? 2 : (huskylens.blockSize[3] ? 3 : -1);
-          heading(100, 90 + 20, 60);  // เฉียงซ้าย
-          // lastYaws = pvYaw;
-          // lastYaws = 60;
-          state = 3;
-        }
-        wheel(0, 0, 0);
-      } else {
-        looptime = millis();
-        while (millis() - looptime <= 500) {
-          // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
-          if (goalID == -1) break;
-          huskylens.updateBlocks();
-          goalID = huskylens.blockSize[2] ? 2 : (huskylens.blockSize[3] ? 3 : -1);
-          heading(100, 90 - 20, -60);  // เฉียงขวา
-          // lastYaws = -60;
-          // lastYaws = pvYaw;
-          state = 4;
-        }
-        wheel(0, 0, 0);
+      if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) {
+        firstbump = false;
+        break;
       }
-      // }
+      if (goalID != -1) {
+        if (goalOnLeft) {
+          looptime = millis();
+          while (millis() - looptime <= 500) {
+            // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
+            if (goalID == -1) break;
+            huskylens.updateBlocks();
+            goalID = huskylens.blockSize[2] ? 2 : (huskylens.blockSize[3] ? 3 : -1);
+            heading(100, 90 + 20, 60);  // เฉียงซ้าย
+            // lastYaws = pvYaw;
+            // lastYaws = 60;
+            state = 3;
+          }
+          wheel(0, 0, 0);
+        } else {
+          looptime = millis();
+          while (millis() - looptime <= 500) {
+            // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
+            if (goalID == -1) break;
+            huskylens.updateBlocks();
+            goalID = huskylens.blockSize[2] ? 2 : (huskylens.blockSize[3] ? 3 : -1);
+            heading(100, 90 - 20, -60);  // เฉียงขวา
+            // lastYaws = -60;
+            // lastYaws = pvYaw;
+            state = 4;
+          }
+          wheel(0, 0, 0);
+        }
+      } else {
+        firstbump = false;
+        break;
+      }
 
     } else if (state == 3) {
       // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
