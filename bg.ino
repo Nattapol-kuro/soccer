@@ -1199,6 +1199,9 @@ void BackTouchLine() {
       }
       heading(0, 0, 0);
     }
+
+    MergedGoal goal = getMergedGoalAll();
+
     if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
       wheel(0, 0, 0);
       loopTimer = millis();
@@ -1240,22 +1243,58 @@ void BackTouchLine() {
       FoundLeft = 0;
       FoundRight = 0;
       count++;
+      
+
+      if (goal.y > 70) {
+        // beep();
+        long looptime = millis();
+        while (millis() - looptime <= 500) {
+          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
+          // else if (analogRead(A2) > Sen_Left && analogRead(A3) < Sen_Right && FoundRight == 0) {
+          //   FoundLeft = 1;
+          //   // getIMU();
+          //   holonomic(100, 315, 0);
+          //   nubL = millis();
+          //   while (millis() - nubL <= 80) {
+          //     if (analogRead(A3) > Sen_Right) {
+          //       holonomic(0, 0, 0);
+          //       FoundRight = 1;
+          //       break;
+          //     }
+          //   }
+          // } else if (analogRead(A2) < Sen_Left && analogRead(A3) > Sen_Right && FoundLeft == 0) {
+          //   FoundRight = 1;
+          //   // getIMU();
+          //   holonomic(100, 225, 0);
+          //   nubR = millis();
+          //   while (millis() - nubR <= 80) {
+          //     if (analogRead(A2) > Sen_Left) {
+          //       // getIMU();
+          //       holonomic(0, 0, 0);
+          //       FoundLeft = 1;
+          //       break;
+          //     }
+          //     if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
+          //       break;
+          //     }
+          //   }
+          // }
+          heading(100, 270, 0);
+        }
+      }
+
       loopTimer = millis();
       while (millis() - loopTimer <= 550) {
         getIMU();
         // if (analogRead(A2) > Sen_Left) FoundCent == 1;
         heading(100, 90, 0);
-        if ((huskylens.updateBlocks() && huskylens.blockSize[1]) /*|| FoundCent == 1*/) {
+        if ((huskylens.updateBlocks() && huskylens.blockSize[1]) || (FoundRight == 1 && FoundLeft == 1)) {
           break;
         }
       }
-      if (analogRead(A2) > Sen_Left && analogRead(A3) > Sen_Right && (huskylens.blockInfo[2][0].y || huskylens.blockInfo[3][0].y) > 100) {
-        long looptime;
-        while (millis() - looptime <= 500) {
-          if (huskylens.updateBlocks() && huskylens.blockSize[1]) break;
-          heading(100, 270, 0);
-        }
-      }
+
+      FoundLeft = 0;
+      FoundRight = 0;
       if (count == 1) {
         count = 0;
         state = 3;
@@ -1293,11 +1332,37 @@ void BackTouchLine() {
       }
       // state = 1;
       //break;
-    } else if (analogRead(A3) < Sen_Right && analogRead(A2) < Sen_Left && analogRead(A1) < Sen_Front) {
+    }
+    // else if (analogRead(A3) < Sen_Right && analogRead(A2) < Sen_Left && analogRead(A1) < Sen_Front) {
+    //   FoundLeft = 0;
+    //   FoundRight = 0;
+    //   FoundCent = 0;
+    //   // อ่าน goal ด้วย MergedGoal
+    //   MergedGoal goal = getMergedGoalAll();
+    //   if (goal.found) {
+    //     goalEstX = goal.x;
+    //     goalEstWidth = goal.w;
+    //   } else {
+    //     goalEstX = 160;
+    //   }
+    //   if (!(huskylens.blockSize[2] || huskylens.blockSize[3])) {
+    //     vecCurveV = 270;
+    //   } else if (goalEstX >= 160 + 50) {
+    //     vecCurveV = 315;
+    //   } else if (goalEstX <= 160 - 50) {
+    //     vecCurveV = 225;
+    //   } else {
+    //     vecCurveV = 270;
+    //   }
+    //   getIMU();
+    //   heading(100, vecCurveV, 0);
+    // }
+
+    else if (analogRead(A3) < Sen_Right && analogRead(A2) < Sen_Left && analogRead(A1) < Sen_Front) {
       FoundLeft = 0;
       FoundRight = 0;
       FoundCent = 0;
-      // อ่าน goal ด้วย MergedGoal
+
       MergedGoal goal = getMergedGoalAll();
       if (goal.found) {
         goalEstX = goal.x;
@@ -1305,18 +1370,39 @@ void BackTouchLine() {
       } else {
         goalEstX = 160;
       }
+
+      float goalError = goalEstX - 160;
+      float slideSpd = 0;
+      float goalX_Kp = 0.4;
+      float goalX_Kd = 0.15;
+      float goalX_PvError = 0;
       if (!(huskylens.blockSize[2] || huskylens.blockSize[3])) {
-        vecCurveV = 270;
-      } else if (goalEstX >= 160 + 50) {
-        vecCurveV = 315;
-      } else if (goalEstX <= 160 - 50) {
-        vecCurveV = 225;
+        // ไม่เห็นโกลเลย → ถอยตรง
+        slideSpd = 0;
+      } else if (abs(goalError) > 60) {
+        // ไกลมาก → slide เต็ม
+        slideSpd = (goalError > 0) ? 100 : -100;
+      } else if (abs(goalError) > 15) {
+        // ใกล้กลาง → PD
+        float goalD = goalError - goalX_PvError;
+        slideSpd = (goalError * goalX_Kp) + (goalD * goalX_Kd);
+        slideSpd = constrain(slideSpd, -60, 60);
       } else {
-        vecCurveV = 270;
+        // กลางแล้ว → หยุด slide
+        slideSpd = 0;
       }
+      goalX_PvError = goalError;
+
+      float backSpd = 100;
+      float angle_rad = atan2(-backSpd, slideSpd) * (180.0 / PI);
+      if (angle_rad < 0) angle_rad += 360;
+      float totalSpd = sqrt(pow(backSpd, 2) + pow(slideSpd, 2));
+      totalSpd = constrain(totalSpd, 0, 100);
+
       getIMU();
-      heading(100, vecCurveV, 0);
+      heading(totalSpd, angle_rad, 0);
     }
+
     // else if (analogRead(A3) < Sen_Right && analogRead(A2) < Sen_Left && analogRead(A1) < Sen_Front) {
     //   FoundLeft = 0;
     //   FoundRight = 0;

@@ -84,7 +84,7 @@ void AtanTrack5() {
       lastYaw = pvYaw;
       if (abs(pvYaw) <= 5 || ballInGoalArea) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
         if (abs(Xaxis_Error) <= 15) {
-          dribblingtothegoal5();
+          // dribblingtothegoal5();
           // wheel(0, 0, 0);
           // SetYaw();
           // getIMU();
@@ -155,4 +155,3 @@ void AtanTrack5() {
     }
   }
 }
-

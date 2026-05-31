@@ -1,5 +1,3 @@
-long startDeft;
-
 void S_B3() {  //full state but not bump
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     long looptime;
@@ -11,13 +9,13 @@ void S_B3() {  //full state but not bump
     } else if (analogRead(A2) > Sen_Left && (millis() - startDeft > 1000)) {
       looptime = millis();
       while (millis() - looptime <= 300) {
-        holonomic(100, 0, 0);
+        holonomic(100, 350, 0);
       }
       wheel(0, 0, 0);
     } else if (analogRead(A3) > Sen_Right && (millis() - startDeft > 1000)) {
       looptime = millis();
       while (millis() - looptime <= 300) {
-        holonomic(100, 180, 0);
+        holonomic(100, 190, 0);
       }
       wheel(0, 0, 0);
     } else {

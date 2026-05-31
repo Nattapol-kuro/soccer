@@ -78,7 +78,7 @@ float estimatedX = 0.0f;
 float estimatedY = 0.0f;
 
 int menu() {
-  int NUMBER_KNOB = 9;
+  int NUMBER_KNOB = 7;
   int lastX = -1;
 
   while (1) {
@@ -93,18 +93,16 @@ int menu() {
     }
 
     oled.clear();
-    oled.text(0, NUMBER_KNOB, "=== MENU! ===    ", x);
+    oled.text(0, 7, "=== MENU! ===      ", x);
     oled.text(2, 0, "CASE = %d", x);
 
     if (x == 1) oled.text(4, 0, ">chksens", x);
     if (x == 2) oled.text(4, 0, ">CoordsBall", x);
-    if (x == 3) oled.text(4, 0, ">S1Def", x);
-    if (x == 4) oled.text(4, 0, ">S3Def", x);
+    if (x == 3) oled.text(4, 0, ">S3Def", x);
+    if (x == 4) oled.text(4, 0, ">S_B3", x);
     if (x == 5) oled.text(4, 0, ">S_B1", x);
-    if (x == 6) oled.text(4, 0, ">S_B3", x);
-    if (x == 7) oled.text(4, 0, ">S_B5", x);
-    if (x == 8) oled.text(4, 0, ">penaltyshoot", x);
-    if (x == 9) oled.text(4, 0, ">penaltysave", x);
+    if (x == 6) oled.text(4, 0, ">penaltyshoot", x);
+    if (x == 7) oled.text(4, 0, ">penaltysave", x);
 
     oled.text(6, 5, "PRESS_SW_OK", x);
     oled.show();
@@ -141,32 +139,20 @@ void MENU() {
       CoordsBall();
     }
   } else if (x == 3) {
-    // while (1) {
-    S1Def();
-    // }
-  } else if (x == 4) {
-    // while (1) {
     S3Def();
-    // BackTouchLine();
-    // }
+  } else if (x == 4) {
+    while (1) {
+      S_B3();
+    }
   } else if (x == 5) {
     while (1) {
       S_B1();
     }
   } else if (x == 6) {
     while (1) {
-      S_B3();
-    }
-  } else if (x == 7) {
-    while (1) {
-      S_B5();
-      // BackTouchLine();
-    }
-  } else if (x == 8) {
-    while (1) {
       penaltyshoot();
     }
-  } else if (x == 9) {
+  } else if (x == 7) {
     while (1) {
       penaltysave();
     }
@@ -286,10 +272,24 @@ void heading(float spd, float theta, float spYaw) {
 
   head_pError = head_error;
 }
+long yawTimer;
+void SetYaw() {
+  getIMU();
+  if ((pvYaw >= 10 || pvYaw < -10)) {
+    getIMU();
+    yawTimer = millis();
+    while (millis() - yawTimer <= 100) {
+      getIMU();
+      heading(0, 0, 0);
+    }
+    holonomic(0, 0, 0);
+    getIMU();
+  }
+}
 
 void shoot() {
   // beep();
-  motor(4,65);
+  motor(4, 65);
   delay(150);
   motor(4, 0);
   delay(50);
@@ -304,7 +304,7 @@ void reload() {
     if (analogRead(limPin) > 1000) break;
     delay(1);
   }
-  if (timer == 700) {     // ถ้าก้านยิงติด
+  if (timer == 700) {      // ถ้าก้านยิงติด
     motor(4, -reloadSpd);  // เลื่อนก้านยิงไปข้างหน้า
     delay(500);            //ก่อน 0.5 วินาที
     // sound(800,500);
@@ -485,9 +485,9 @@ void CoordsBall() {
     // Serial.print(ballPosY);
 
     // oled.text(2, 3, "ballX : %d", ballX);
-    oled.text(3, 3, "ballXpos : %d", ballPosX);
+    oled.text(3, 3, "ballXpos : %d   ", ballPosX);
     // oled.text(4, 3, "ballY : %d", ballY);
-    oled.text(5, 3, "ballYpos : %d", ballPosY);
+    oled.text(5, 3, "ballYpos : %d   ", ballPosY);
     oled.show();
 
     ballPosX = huskylens.blockInfo[1][0].x;

@@ -77,19 +77,13 @@ void dribblingtothegoal() {  //normal drib follow goal
         // wheel(0, 0, 0);
         unsigned long t = millis();
         while (millis() - t < 600) {
-          long looptime;
+
           if (analogRead(A2) > Sen_Left) {
-            looptime = millis();
-            while (millis() - looptime <= 300) {
-              holonomic(100, 0, 0);
-            }
             wheel(0, 0, 0);
+            break;
           } else if (analogRead(A3) > Sen_Right) {
-            looptime = millis();
-            while (millis() - looptime <= 300) {
-              holonomic(100, 180, 0);
-            }
             wheel(0, 0, 0);
+            break;
           }
           heading(100, 270, 0);
           // holonomic(100, 270, 0);
@@ -112,7 +106,7 @@ void dribblingtothegoal() {  //normal drib follow goal
       if (!ballInGoalX && abs(ballError) < 80) {
         // บอลซ้าย/ขวาโกล → เลื่อนหุ่นจัดบอลเข้ากรอบ X
         theta = constrain(90.0 + (alignErr * 0.4), 45, 135);
-        rot_w = constrain(-alignErr * 0.4, -60, 60);
+        rot_w = constrain(-alignErr * 0.45, -70, 70);
         speed = 100;
       } else {
         // บอลใน X แล้ว แต่ยังไม่ใกล้พอ → วิ่งตรงเข้า
@@ -175,8 +169,9 @@ void dribblingtothegoal() {  //normal drib follow goal
 
 
 
-void dribblingtothegoal5() {  //normal drib follow goal
-                              // sound(2654,100);
+void dribblingtothegoal1() {  //normal drib follow goal
+  // sound(2654,100);
+  bypassC = 0;
   while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
     getIMU();
 
@@ -187,13 +182,45 @@ void dribblingtothegoal5() {  //normal drib follow goal
     MergedGoal goal = getMergedGoalAll();
 
     // ======= Phase 0 & 1: เห็นโกล =======
+    long looptime;
+    if (analogRead(A1) > Sen_Front && (!((huskylens.updateBlocks() && huskylens.blockSize[2]) || (huskylens.updateBlocks() && huskylens.blockSize[3])))) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        heading(100, 270, 0);
+      }
+    } else if (analogRead(A2) > Sen_Left) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        if (analogRead(A3) > Sen_Right) {
+          holonomic(100, 180, 0);
+          delay((millis() - looptime) / 2);
+          break;
+        }
+        holonomic(100, 0, 0);
+      }
+      wheel(0, 0, 0);
+    } else if (analogRead(A3) > Sen_Right) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        if (analogRead(A2) > Sen_Left) {
+          holonomic(100, 0, 0);
+          delay((millis() - looptime) / 2);
+          break;
+        }
+        holonomic(100, 180, 0);
+      }
+      wheel(0, 0, 0);
+    }
     if (goal.found) {
       float goalLeft = goal.x - (goal.w / 2.0);
       float goalRight = goal.x + (goal.w / 2.0);
 
       bool ballInGoalX = (ballX > goalLeft) && (ballX < goalRight);
-      bool ballInGoalY = (ballY - goal.y < 20) && (ballY > 200) && (goal.h > 60);
+      bool ballInGoalY = /*(ballY - goal.y < 100) &&*/ (ballY > 215) /*&& (goal.h > 60)*/;
 
+      // if (analogRead(A1) > Sen_Front) {
+      //   bypassC++;
+      // }
       // ======= Phase 1: ยิง =======
       if ((ballInGoalX && ballInGoalY) || analogRead(A1) > Sen_Front) {
         if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) {
@@ -212,11 +239,36 @@ void dribblingtothegoal5() {  //normal drib follow goal
 
         // ===== ยิง =====
         // shoot();
+        motor(4, 65);
         wheel(0, 0, 0);
+        delay(150);
+        motor(4, 0);
+        delay(50);
+        reload();
+        // wheel(0, 0, 0);
         unsigned long t = millis();
-        while (millis() - t < 600) holonomic(100, 270, 0);
+        while (millis() - t < 600) {
+
+          if (analogRead(A1) > Sen_Front) {
+            wheel(0, 0, 0);
+            break;
+          } else if (analogRead(A2) > Sen_Left) {
+            wheel(0, 0, 0);
+            break;
+          } else if (analogRead(A3) > Sen_Right) {
+            wheel(0, 0, 0);
+            break;
+          } else {
+            AtanTrack1();
+          }
+          // heading(100, 270, 0);
+          // holonomic(100, 270, 0);
+        }
+        // if (bypassC == 2 && (huskylens.updateBlocks() && huskylens.blockSize[1]) && ((huskylens.updateBlocks() && huskylens.blockSize[2]) || (huskylens.updateBlocks() && huskylens.blockSize[3]))) {
+        //   bypassC = 0;
+        //   AtanTrack_find_bypass();
+        // }
         wheel(0, 0, 0);
-        // reload();
         return;
       }
 
@@ -226,10 +278,10 @@ void dribblingtothegoal5() {  //normal drib follow goal
       float theta, speed, rot;
       float goalYaw = alignErr * 0.2;  // แปลง goalError เป็นองศาที่ต้องหมุน
 
-      if (!ballInGoalX) {
+      if (!ballInGoalX && abs(ballError) < 80) {
         // บอลซ้าย/ขวาโกล → เลื่อนหุ่นจัดบอลเข้ากรอบ X
         theta = constrain(90.0 + (alignErr * 0.4), 45, 135);
-        rot_w = constrain(-alignErr * 0.2, -15, 15);
+        rot_w = constrain(-alignErr * 0.45, -70, 70);
         speed = 100;
       } else {
         // บอลใน X แล้ว แต่ยังไม่ใกล้พอ → วิ่งตรงเข้า
@@ -238,7 +290,6 @@ void dribblingtothegoal5() {  //normal drib follow goal
         // goalYaw = 0;
         speed = 100;
       }
-
       holonomic(speed, theta, rot_w);
       // return;
     }
@@ -262,6 +313,12 @@ void dribblingtothegoal5() {  //normal drib follow goal
       holonomic(speed, theta, rot_w);
       continue;
     }
+    //  else if ((!(huskylens.updateBlocks() && huskylens.blockSize[1])) && (huskylens.blockSize[2] || huskylens.blockSize[3])) {
+    //   lastYawseegoal = 0;
+    //   heading(0, 0, lastYawseegoal);
+    //   BackTouchLine();
+    // }
+
 
     // ======= Phase 2: ไม่เห็นโกลเลย → เลี้ยงบอลไปข้างหน้า =======
     else {
@@ -280,140 +337,4 @@ void dribblingtothegoal5() {  //normal drib follow goal
     }
   }
   wheel(0, 0, 0);
-}
-
-void AtanTrack_find_bypass() {
-  if ((huskylens.updateBlocks() && huskylens.blockSize[1])) {
-    ballPosX = huskylens.blockInfo[1][0].x;
-    ballPosY = huskylens.blockInfo[1][0].y;
-    float QuaDrantX = huskylens.blockInfo[1][0].x - 160;
-    float QuaDrantY = 180 - huskylens.blockInfo[1][0].y;
-    float TanTheta = QuaDrantY / QuaDrantX;
-    float Setha = atan(TanTheta) * (180 / PI);
-    float SethaPos;
-    float DisTanT = sqrt(pow(abs(QuaDrantX), 2) + pow(abs(QuaDrantY), 2));
-    if (Setha >= 0) {
-      SethaPos = Setha;
-    } else if (Setha < 0) {
-      SethaPos = 180 + Setha;
-    } else if (SethaPos <= 100 && SethaPos >= 80) {
-      SethaPos = 90;
-    }
-    // SetYaw();
-    Yaxis_Error = 160 - huskylens.blockInfo[1][0].y;
-    Yaxis_D = Yaxis_Error - Yaxis_PvEror;
-    Yaxis_spd = (Yaxis_Error * Yaxis_Kp) + (Yaxis_D * Yaxis_Kd);
-    Yaxis_spd = constrain(Yaxis_spd, -100, 100);
-    Yaxis_PvEror = Yaxis_Error;
-
-    getIMU();
-    // long looptime = millis();
-    // if (analogRead(SenL) > Sen_Left) {
-    //   looptime = millis();
-    //   while (millis() - looptime <= 150) {
-    //     holonomic(100, 35, 0);
-    //   }
-    //   wheel(0, 0, 0);
-    // } else if (analogRead(SenR) > Sen_Right) {
-    //   looptime = millis();
-    //   while (millis() - looptime <= 150) {
-    //     holonomic(100, 145, 0);
-    //   }
-    //   wheel(0, 0, 0);
-    // } else {
-    heading(Yaxis_spd, SethaPos, 0);
-    // }
-
-    float goalEstX, goalEstY, goalEstWidth;
-    if (huskylens.blockSize[2]) {
-      goalEstX = huskylens.blockInfo[2][0].x;
-      goalEstY = huskylens.blockInfo[2][0].y;
-      goalEstWidth = huskylens.blockInfo[2][0].width;
-    } else if (huskylens.blockSize[3]) {
-      goalEstX = huskylens.blockInfo[3][0].x;
-      goalEstY = huskylens.blockInfo[3][0].y;
-      goalEstWidth = huskylens.blockInfo[3][0].width;
-    }
-    float goalLeft = goalEstX - goalEstWidth / 2.0;
-    float goalRight = goalEstX + goalEstWidth / 2.0;
-    bool ballInGoalArea = false;
-    if (goalEstWidth > 0) {
-      ballInGoalArea = (ballPosX >= goalLeft && ballPosX <= goalRight);
-    }
-    if (Yaxis_Error <= 25) {
-      getIMU();
-      lastYaw = pvYaw;
-      if (abs(pvYaw) <= 5 || ballInGoalArea) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
-        if (abs(Xaxis_Error) <= 15) {
-          holonomic(100, 90, 0);
-          // dribblingtothegoal5();
-          // wheel(0, 0, 0);
-          // SetYaw();
-          // getIMU();
-          // beep();
-          // lastYaw = pvYaw;
-          // bypassYaw = 0;
-          // beep();
-          // Bumping();
-        } else {
-          TrackXaxis2();
-        }
-      } else if ((abs(pvYaw) > 10) && (huskylens.updateBlocks() && huskylens.blockSize[1])) {
-        // if (huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3]) bypassYaw = 1;
-        while ((huskylens.updateBlocks() && huskylens.blockSize[1]) && Yaxis_Error <= 20) {
-          getIMU();
-          rot_error = 155 - huskylens.blockInfo[1][0].x;
-          rot_d = rot_error - rot_pError;
-          rot_pError = rot_error;
-          rot_w = (rot_error * 0.45) + (rot_i * 0.05) + (rot_d * 0.8);
-          rot_w = constrain(rot_w, -100, 100);
-          Xaxis_Error = huskylens.blockInfo[1][0].x - 160;
-          Xaxis_D = Xaxis_Error - Xaxis_PvEror;
-          Xaxis_PvEror = Xaxis_Error;
-
-          int rot = (Xaxis_Error * Xaxis_Kp) + (Xaxis_D * Xaxis_Kd);
-          rot = constrain(rot, -100, 100);
-
-          Yaxis_Error = 180 - huskylens.blockInfo[1][0].y;
-          Yaxis_D = Yaxis_Error - Yaxis_PvEror;
-          Yaxis_spd = (Yaxis_Error * Yaxis_Kp) + (Yaxis_D * Yaxis_Kd);
-          Yaxis_spd = constrain(Yaxis_spd, -100, 100);
-          Yaxis_PvEror = Yaxis_Error;
-
-          if (Yaxis_Error > 5) {
-            // if (analogRead(SenL) > Sen_Left) {
-            //   looptime = millis();
-            //   while (millis() - looptime <= 150) {
-            //     heading(100, 35, 0);
-            //   }
-            //   wheel(0, 0, 0);
-            // } else if (analogRead(SenR) > Sen_Right) {
-            //   looptime = millis();
-            //   while (millis() - looptime <= 150) {
-            //     heading(100, 145, 0);
-            //   }
-            //   wheel(0, 0, 0);
-            // } else {
-            holonomic(Yaxis_spd, 90, rot_w);
-            // }
-          }
-          if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
-
-          // int targetSpeed = (abs(pvYaw) > 50) ? 90 : 70;
-          // int currentSpeed = 0.8 * currentSpeed + 0.2 * targetSpeed;  // smoothing speed
-          // if (pvYaw < 0) {
-          //   vecCurve = 0;
-          // } else {
-          //   vecCurve = 180;
-          // }
-          // holonomic(currentSpeed, vecCurve, rot_w);
-          // if (Yaxis_Error > 5) heading(Yaxis_spd, 90, rot);
-          // if (abs(pvYaw) <= 10) {
-          //   // bypassYaw = 1;
-          //   break;
-          // }
-        }
-      }
-    }
-  }
 }

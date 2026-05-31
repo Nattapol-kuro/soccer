@@ -14,43 +14,36 @@
 // }
 
 unsigned long ballLostCooldown = 0;
+long startDeft;
 
-void S_B1() {
-  MergedGoal goal = getMergedGoalAll();
-  long looptime;
-
-  float ballY = huskylens.blockInfo[1][0].y;
-  float distToGoal = abs(ballY - goal.y);  // ระยะห่างบอล-โกลแกน Y
-
-  bool ballNearGoal = goal.found && (distToGoal < 30) && (goal.h > 30);
-
+void S_B1() {  //full state but not bump
   if (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-    if (analogRead(A2) > Sen_Left) {
+    long looptime;
+    if (analogRead(A1) > Sen_Front && (!((huskylens.updateBlocks() && huskylens.blockSize[2]) || (huskylens.updateBlocks() && huskylens.blockSize[3])))) {
       looptime = millis();
       while (millis() - looptime <= 300) {
-        holonomic(100, 0, 0);
+        heading(100, 270, 0);
+      }
+    } else if (analogRead(A2) > Sen_Left && (millis() - startDeft > 1000)) {
+      looptime = millis();
+      while (millis() - looptime <= 300) {
+        holonomic(100, 350, 0);
       }
       wheel(0, 0, 0);
-    } else if (analogRead(A3) > Sen_Right) {
+    } else if (analogRead(A3) > Sen_Right && (millis() - startDeft > 1000)) {
       looptime = millis();
       while (millis() - looptime <= 300) {
-        holonomic(100, 180, 0);
+        holonomic(100, 190, 0);
       }
       wheel(0, 0, 0);
     } else {
-      // if (ballNearGoal) {
-      //   // beep();
-      //   while (huskylens.updateBlocks() && huskylens.blockSize[1]) {
-      //     AtanTrack4();  // บอลใกล้โกล → ค่อยๆ หันหาโกลด้วย
-      //   }
-      // } else {
-      AtanTrack1();  // บอลไกล → ไล่บอลปกติ
-      // }
+      AtanTrack1();
     }
   } else {
-    // if (millis() - ballLostCooldown < 80) AtanTrack1();  // ยังอยู่ใน cooldown → ไม่เข้า
+    if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) {
+      BackTouchLine();
+    }
     BackTouchLine();
-    // ballLostCooldown = millis();
   }
 }
 
@@ -107,41 +100,75 @@ void AtanTrack1() {
       if (abs(pvYaw) <= 8 || ballInGoalArea) {  //(huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3])) {
         TrackXaxis();
         if (abs(Xaxis_Error) <= 15 && firstbump == 1) {
-          bump_oblique_test();
-        } else if ((abs(Xaxis_Error) <= 15)) {
+          // bump_oblique_test();
+        }
+        if (abs(Xaxis_Error) <= 15) {
           // beep();
-          dribblingtothegoal();
+          dribblingtothegoal1();
         }
       } else {
         // if (huskylens.updateBlocks() && huskylens.blockSize[2] && huskylens.blockSize[3]) bypassYaw = 1;
-        while (abs(pvYaw) >= 8 && huskylens.updateBlocks()) {
-          if (huskylens.blockSize[2]) {
-            goalEstX = huskylens.blockInfo[2][0].x;
-            goalEstY = huskylens.blockInfo[2][0].y;
-            goalEstWidth = huskylens.blockInfo[2][0].width;
-          } else if (huskylens.blockSize[3]) {
-            goalEstX = huskylens.blockInfo[3][0].x;
-            goalEstY = huskylens.blockInfo[3][0].y;
-            goalEstWidth = huskylens.blockInfo[3][0].width;
+
+        if ((goalEstY) > 60) {
+          while (!ballInGoalArea) {
+            if (huskylens.blockSize[2]) {
+              goalEstX = huskylens.blockInfo[2][0].x;
+              goalEstY = huskylens.blockInfo[2][0].y;
+              goalEstWidth = huskylens.blockInfo[2][0].width;
+            } else if (huskylens.blockSize[3]) {
+              goalEstX = huskylens.blockInfo[3][0].x;
+              goalEstY = huskylens.blockInfo[3][0].y;
+              goalEstWidth = huskylens.blockInfo[3][0].width;
+            }
+            if (goalEstWidth > 0) {
+              ballInGoalArea = (ballPosX >= goalLeft && ballPosX <= goalRight);
+            } else ballInGoalArea = false;
+
+            getIMU();
+            rot_error = 160 - huskylens.blockInfo[1][0].x;
+            rot_d = rot_error - rot_pError;
+            rot_pError = rot_error;
+            rot_w = (rot_error * 0.5) + (rot_i * 0) + (rot_d * 0.045);
+            rot_w = constrain(rot_w, -100, 100);
+
+            // if (abs(rot_error) <= 2.5) rot_w = 0;
+
+            vecCurve = (pvYaw >= 0) ? 170 : 10;
+            if (abs(pvYaw) > 50) holonomic(80, vecCurve, rot_w);
+            else if (abs(pvYaw) > 35) holonomic(40, vecCurve, rot_w);
+            else holonomic(30, vecCurve, rot_w);
+            if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
           }
-          if (goalEstWidth > 0) {
-            ballInGoalArea = (ballPosX >= goalLeft && ballPosX <= goalRight);
-          } else ballInGoalArea = false;
+        } else {
+          while (abs(pvYaw) >= 8 && huskylens.updateBlocks()) {
+            if (huskylens.blockSize[2]) {
+              goalEstX = huskylens.blockInfo[2][0].x;
+              goalEstY = huskylens.blockInfo[2][0].y;
+              goalEstWidth = huskylens.blockInfo[2][0].width;
+            } else if (huskylens.blockSize[3]) {
+              goalEstX = huskylens.blockInfo[3][0].x;
+              goalEstY = huskylens.blockInfo[3][0].y;
+              goalEstWidth = huskylens.blockInfo[3][0].width;
+            }
+            if (goalEstWidth > 0) {
+              ballInGoalArea = (ballPosX >= goalLeft && ballPosX <= goalRight);
+            } else ballInGoalArea = false;
 
-          getIMU();
-          rot_error = 160 - huskylens.blockInfo[1][0].x;
-          rot_d = rot_error - rot_pError;
-          rot_pError = rot_error;
-          rot_w = (rot_error * 0.5) + (rot_i * 0) + (rot_d * 0.045);
-          rot_w = constrain(rot_w, -100, 100);
+            getIMU();
+            rot_error = 160 - huskylens.blockInfo[1][0].x;
+            rot_d = rot_error - rot_pError;
+            rot_pError = rot_error;
+            rot_w = (rot_error * 0.5) + (rot_i * 0) + (rot_d * 0.045);
+            rot_w = constrain(rot_w, -100, 100);
 
-          // if (abs(rot_error) <= 2.5) rot_w = 0;
+            // if (abs(rot_error) <= 2.5) rot_w = 0;
 
-          vecCurve = (pvYaw >= 0) ? 170 : 10;
-          if (abs(pvYaw) > 50) holonomic(80, vecCurve, rot_w);
-          else if (abs(pvYaw) > 35) holonomic(40, vecCurve, rot_w);
-          else holonomic(25, vecCurve, rot_w);
-          if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
+            vecCurve = (pvYaw >= 0) ? 170 : 10;
+            if (abs(pvYaw) > 50) holonomic(80, vecCurve, rot_w);
+            else if (abs(pvYaw) > 35) holonomic(40, vecCurve, rot_w);
+            else holonomic(30, vecCurve, rot_w);
+            if (!(huskylens.updateBlocks() && huskylens.blockSize[1])) { break; }
+          }
         }
       }
     }
