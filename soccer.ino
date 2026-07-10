@@ -377,9 +377,7 @@ void loop() {
   // }
   // wheel(0, 0, 0);
   // dribblingtothegoal();
-
   MENU();
-
   // long looptime = millis();
   // while (millis() - looptime <= 500) {
   //   // if (!huskylens.updateBlocks() || !huskylens.blockSize[1]) break;
@@ -392,7 +390,6 @@ void loop() {
   // oled.text(3, 3,"%+f", lastYaw);
   // oled.show();
   // heading(100, 270, lastYaw);
-
   // Atantrak_dibbling();
   // AtanTrack3();
   // Bumping();
@@ -426,12 +423,10 @@ void loop() {
   //     // ===== Goal =====
   // oled.text(1, 0, "G:%f, %f    ", goal.x, goal.y);
   // oled.text(2, 0, "W:%f H:%f    ", goal.w, goal.h);
-
   //     // ===== Align =====
   //     oled.text(4, 0, "AX:%f", ax);
   //     oled.text(5, 0, "AY:%f", ay);
   //     oled.text(6, 0, "AW:%f", aw);
-
   // oled.show();
   // }
   // }
